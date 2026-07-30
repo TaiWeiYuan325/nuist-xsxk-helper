@@ -19,6 +19,7 @@
         <StreamGeometry x:Key="IcTrash">M4,6.5 h16 M9.5,6.5 v-3 h5 v3 M6.5,6.5 l1,14 h9 l1,-14 M10,10.5 v6.5 M14,10.5 v6.5</StreamGeometry>
         <StreamGeometry x:Key="IcArrowUp">M12,19.5 v-15 M5.5,11 L12,4.5 L18.5,11</StreamGeometry>
         <StreamGeometry x:Key="IcArrowDown">M12,4.5 v15 M5.5,13 L12,19.5 L18.5,13</StreamGeometry>
+        <StreamGeometry x:Key="IcArrowRight">M4.5,12 h15 M13,5.5 L19.5,12 L13,18.5</StreamGeometry>
         <StreamGeometry x:Key="IcWinMin">M7,17 h10</StreamGeometry>
         <StreamGeometry x:Key="IcWinMax">M7.5,7.5 h9 v9 h-9 Z</StreamGeometry>
         <StreamGeometry x:Key="IcWinClose">M7,7 L17,17 M17,7 L7,17</StreamGeometry>
