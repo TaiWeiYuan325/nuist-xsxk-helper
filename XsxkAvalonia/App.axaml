@@ -19,9 +19,9 @@
         <StreamGeometry x:Key="IcTrash">M4,6.5 h16 M9.5,6.5 v-3 h5 v3 M6.5,6.5 l1,14 h9 l1,-14 M10,10.5 v6.5 M14,10.5 v6.5</StreamGeometry>
         <StreamGeometry x:Key="IcArrowUp">M12,19.5 v-15 M5.5,11 L12,4.5 L18.5,11</StreamGeometry>
         <StreamGeometry x:Key="IcArrowDown">M12,4.5 v15 M5.5,13 L12,19.5 L18.5,13</StreamGeometry>
-        <StreamGeometry x:Key="IcWinMin">M5,12 h14</StreamGeometry>
-        <StreamGeometry x:Key="IcWinMax">M6.5,6.5 h11 v11 h-11 Z</StreamGeometry>
-        <StreamGeometry x:Key="IcWinClose">M6,6 l12,12 M18,6 l-12,12</StreamGeometry>
+        <StreamGeometry x:Key="IcWinMin">M7,17 h10</StreamGeometry>
+        <StreamGeometry x:Key="IcWinMax">M7.5,7.5 h9 v9 h-9 Z</StreamGeometry>
+        <StreamGeometry x:Key="IcWinClose">M7,7 L17,17 M17,7 L7,17</StreamGeometry>
     </Application.Resources>
 
     <Application.Styles>
@@ -97,14 +97,16 @@
             <Setter Property="Foreground" Value="#FEFE2C"/>
         </Style>
 
-        <!-- 无边框窗口的控制按钮 -->
+        <!-- 无边框窗口的控制按钮：描边小方块，悬停反色 -->
         <Style Selector="Button.ef-win">
-            <Setter Property="Width" Value="46"/>
-            <Setter Property="Height" Value="40"/>
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Height" Value="30"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="#212121"/>
-            <Setter Property="Padding" Value="0"/>
+            <Setter Property="BorderBrush" Value="#212121"/>
+            <Setter Property="BorderThickness" Value="2"/>
             <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
             <Setter Property="Transitions">
                 <Transitions>
                     <BrushTransition Property="Background" Duration="0:0:0.1"/>
@@ -115,6 +117,43 @@
         <Style Selector="Button.ef-win:pointerover">
             <Setter Property="Background" Value="#212121"/>
             <Setter Property="Foreground" Value="#FEFE2C"/>
+        </Style>
+
+        <!-- 窗口按钮内的图标线条加粗 -->
+        <Style Selector="Button.ef-win Path.ef-ic">
+            <Setter Property="StrokeThickness" Value="2.6"/>
+        </Style>
+
+        <!-- 高级设置折叠按钮：与 Button.ef 同风格（Material 的 ToggleButton 默认样式需显式覆盖） -->
+        <Style Selector="ToggleButton.ef">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#212121"/>
+            <Setter Property="BorderBrush" Value="#212121"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="Padding" Value="14,7"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.12"/>
+                    <BrushTransition Property="Foreground" Duration="0:0:0.12"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="ToggleButton.ef:pointerover">
+            <Setter Property="Background" Value="#FEFE2C"/>
+            <Setter Property="Foreground" Value="#212121"/>
+        </Style>
+        <Style Selector="ToggleButton.ef:checked">
+            <Setter Property="Background" Value="#212121"/>
+            <Setter Property="Foreground" Value="#FEFE2C"/>
+        </Style>
+        <Style Selector="ToggleButton.ef:checked:pointerover">
+            <Setter Property="Background" Value="#212121"/>
+            <Setter Property="Foreground" Value="#FEFE2C"/>
+        </Style>
+        <Style Selector="ToggleButton.ef:checked Path.adv-arrow">
+            <Setter Property="RenderTransform" Value="rotate(180deg)"/>
         </Style>
 
         <!-- 列表选中：亮黄底黑字 -->
