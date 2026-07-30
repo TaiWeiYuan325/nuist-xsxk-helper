@@ -4,6 +4,9 @@ build/
 *.zip
 XsxkWinUI/bin/
 XsxkWinUI/obj/
+XsxkAvalonia/bin/
+XsxkAvalonia/obj/
+NVIDIA Corporation/
 *.spec
 
 # ── 运行期数据（含登录态/日志）──
