@@ -1,5 +1,6 @@
 # ── 构建/发行产物 ──
 dist/
+dist-v2/
 build/
 *.zip
 XsxkWinUI/bin/
