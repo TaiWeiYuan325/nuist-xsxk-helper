@@ -5,6 +5,76 @@
              RequestedThemeVariant="Light">
 
     <Application.Styles>
-        <themes:MaterialTheme BaseTheme="Light" PrimaryColor="Indigo" SecondaryColor="Teal" />
+        <themes:MaterialTheme BaseTheme="Light" PrimaryColor="Amber" SecondaryColor="Teal" />
+
+        <!-- ======== 终末地工业风（v2.1）======== -->
+        <!-- 主题色：亮黄 #FEFE2C / 重黑 #212121 -->
+
+        <!-- 直角黑边卡片 -->
+        <Style Selector="Border.ef-card">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#212121"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="CornerRadius" Value="0"/>
+        </Style>
+
+        <!-- 普通按钮：白底黑框，悬停变黄 -->
+        <Style Selector="Button.ef">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#212121"/>
+            <Setter Property="BorderBrush" Value="#212121"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="Padding" Value="14,7"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.12"/>
+                    <BrushTransition Property="Foreground" Duration="0:0:0.12"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.ef:pointerover">
+            <Setter Property="Background" Value="#FEFE2C"/>
+            <Setter Property="Foreground" Value="#212121"/>
+        </Style>
+        <Style Selector="Button.ef:pressed">
+            <Setter Property="Background" Value="#212121"/>
+            <Setter Property="Foreground" Value="#FEFE2C"/>
+        </Style>
+
+        <!-- 主按钮：黄底黑字黑框，悬停反色 -->
+        <Style Selector="Button.ef-primary">
+            <Setter Property="Background" Value="#FEFE2C"/>
+            <Setter Property="Foreground" Value="#212121"/>
+            <Setter Property="BorderBrush" Value="#212121"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="Padding" Value="14,9"/>
+            <Setter Property="FontWeight" Value="Black"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.12"/>
+                    <BrushTransition Property="Foreground" Duration="0:0:0.12"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.ef-primary:pointerover">
+            <Setter Property="Background" Value="#212121"/>
+            <Setter Property="Foreground" Value="#FEFE2C"/>
+        </Style>
+        <Style Selector="Button.ef-primary:pressed">
+            <Setter Property="Background" Value="#000000"/>
+            <Setter Property="Foreground" Value="#FEFE2C"/>
+        </Style>
+
+        <!-- 列表选中：亮黄底黑字 -->
+        <Style Selector="ListBoxItem:selected">
+            <Setter Property="Background" Value="#FEFE2C"/>
+            <Setter Property="Foreground" Value="#212121"/>
+        </Style>
+        <Style Selector="ListBoxItem:pointerover">
+            <Setter Property="Background" Value="#80FEFE2C"/>
+        </Style>
     </Application.Styles>
 </Application>

@@ -4,204 +4,317 @@
         xmlns:material="clr-namespace:Material.Styles.Controls;assembly=Material.Styles"
         x:Class="XsxkAvalonia.Views.MainWindow"
         x:DataType="vm:MainViewModel"
-        Title="南信大选课助手 v2.0"
+        Title="南信大选课助手 v2.1"
         Width="1440" Height="960" MinWidth="1160" MinHeight="720"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Background="#F4F4F2">
 
-    <Grid ColumnDefinitions="2*,1*" Margin="12">
+    <Grid RowDefinitions="6,*">
 
-        <!-- ============ 左列：状态 / 连接+抢课设置 / 课程列表 ============ -->
-        <Grid Grid.Column="0" RowDefinitions="Auto,Auto,*" Margin="0,0,12,0">
+        <!-- 十字准星网格背景（覆盖内容区） -->
+        <Border Grid.Row="1" IsHitTestVisible="False">
+            <Border.Background>
+                <DrawingBrush TileMode="Tile" DestinationRect="0,0,56,56" SourceRect="0,0,56,56" Stretch="None">
+                    <DrawingBrush.Drawing>
+                        <GeometryDrawing Brush="#1E212121" Geometry="M26,20 v16 M20,26 h16"/>
+                    </DrawingBrush.Drawing>
+                </DrawingBrush>
+            </Border.Background>
+        </Border>
 
-            <!-- 状态监控 -->
-            <material:Card Grid.Row="0" Padding="18,14" Margin="0,0,0,12">
-                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="状态监控" FontSize="16" FontWeight="Bold" Margin="0,0,0,8"/>
-                    <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Spacing="24" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding BrowserBrush}"/>
-                            <TextBlock Text="内置浏览器" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding BrowserStatus}" VerticalAlignment="Center" Opacity="0.7"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding TokenBrush}"/>
-                            <TextBlock Text="登录凭证" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding TokenStatus}" VerticalAlignment="Center" Opacity="0.7"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding WsBrush}"/>
-                            <TextBlock Text="结果推送 WS" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding WsStatus}" VerticalAlignment="Center" Opacity="0.7"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding GrabBrush}"/>
-                            <TextBlock Text="抢课任务" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding GrabStatus}" VerticalAlignment="Center"
-                                       FontWeight="Bold" Foreground="{Binding GrabBrush}"/>
-                        </StackPanel>
-                    </StackPanel>
-                    <StackPanel Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" HorizontalAlignment="Right" Spacing="4">
-                        <TextBlock Text="{Binding BatchTail}" FontSize="12" Opacity="0.75" HorizontalAlignment="Right"/>
-                        <TextBlock Text="{Binding NetText}" FontSize="12" Opacity="0.6" HorizontalAlignment="Right"/>
-                        <TextBlock Text="作者：太微垣，使用 Kimi K3 制作" FontSize="11" Opacity="0.5" HorizontalAlignment="Right"/>
-                    </StackPanel>
-                </Grid>
-            </material:Card>
+        <!-- 等高线装饰纹理（右下角，极低透明度） -->
+        <Image Grid.Row="1" Source="avares://XsxkAvalonia/Assets/contour.png"
+               Width="780" Opacity="0.06" Stretch="Uniform" IsHitTestVisible="False"
+               HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
 
-            <!-- 连接 + 抢课设置 -->
-            <Grid Grid.Row="1" ColumnDefinitions="*,12,*" Margin="0,0,0,12">
+        <!-- 顶部色条：品红 / 黄 / 绿 + 延伸至边缘的黑粗条 -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
+            <Border Width="72" Background="#FF2D92"/>
+            <Border Width="72" Background="#FEFE2C"/>
+            <Border Width="72" Background="#00E0A0"/>
+            <Border HorizontalAlignment="Stretch" Background="#212121"/>
+        </StackPanel>
 
-                <material:Card Grid.Column="0" Padding="18,14">
-                    <StackPanel Spacing="10">
-                        <TextBlock Text="连接" FontSize="16" FontWeight="Bold"/>
-                        <Button Content="🌐 内置浏览器登录" Command="{Binding OpenBrowserCommand}"
-                                Classes="contained" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-                        <TextBlock Text="⚠️ 抢课期间请勿关闭内置浏览器，所有请求都经过它"
-                                   Foreground="#D97706" FontSize="12" TextWrapping="Wrap"/>
-                        <Button Content="🔄 刷新轮次/类别" Command="{Binding RefreshBatchCommand}"
-                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-                        <Expander Header="高级设置" IsExpanded="False">
-                            <StackPanel Spacing="8" Margin="0,8,0,0">
-                                <CheckBox Content="记录浏览器请求（排障用，日志会刷屏）"
-                                          IsChecked="{Binding DebugCapture}"/>
-                                <Button Content="🔑 检查 token 有效期" Command="{Binding CheckTokenCommand}"
-                                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+        <Grid Grid.Row="1" ColumnDefinitions="2*,1*" Margin="14,10,14,12">
+
+            <!-- ============ 左列：状态 / 连接+抢课设置 / 课程列表 ============ -->
+            <Grid Grid.Column="0" RowDefinitions="Auto,Auto,*" Margin="0,0,12,0">
+
+                <!-- 状态监控 -->
+                <Border Classes="ef-card" Grid.Row="0" Padding="18,14" Margin="0,0,0,12">
+                    <Grid>
+                        <!-- 等高线 + 条纹大字装饰 -->
+                        <Image Source="avares://XsxkAvalonia/Assets/contour.png"
+                               Height="96" Opacity="0.07" Stretch="Uniform" IsHitTestVisible="False"
+                               HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <TextBlock Text="XSXK" FontSize="46" FontWeight="Black" FontFamily="Consolas"
+                                   Opacity="0.15" IsHitTestVisible="False"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,90,0">
+                            <TextBlock.Foreground>
+                                <DrawingBrush TileMode="Tile" DestinationRect="0,0,12,12" SourceRect="0,0,12,12" Stretch="None">
+                                    <DrawingBrush.Drawing>
+                                        <GeometryDrawing Brush="#212121" Geometry="M-2,14 L14,-2 L16,0 L0,16 Z"/>
+                                    </DrawingBrush.Drawing>
+                                </DrawingBrush>
+                            </TextBlock.Foreground>
+                        </TextBlock>
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                            <!-- 标题：小黄块 + 文字下等长细线 + 贯穿粗线 -->
+                            <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,8">
+                                <Border BorderBrush="#212121" BorderThickness="0,0,0,1"
+                                        HorizontalAlignment="Left" Padding="0,0,0,2">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Border Width="9" Height="9" Background="#FEFE2C" VerticalAlignment="Center"/>
+                                        <TextBlock Text="状态监控" FontSize="17" FontWeight="Black"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Height="3" Background="#212121" Margin="0,2,0,0"/>
                             </StackPanel>
-                        </Expander>
-                    </StackPanel>
-                </material:Card>
-
-                <material:Card Grid.Column="2" Padding="18,14">
-                    <StackPanel Spacing="10">
-                        <TextBlock Text="抢课设置" FontSize="16" FontWeight="Bold"/>
-                        <Grid ColumnDefinitions="*,12,*" RowDefinitions="Auto,Auto" RowSpacing="10">
-                            <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
-                                <TextBlock Text="轮次" FontSize="12" Opacity="0.7"/>
-                                <ComboBox ItemsSource="{Binding Batches}" SelectedItem="{Binding SelectedBatch}"
-                                          HorizontalAlignment="Stretch" MaxDropDownHeight="360"/>
+                            <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Spacing="24" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding BrowserBrush}"/>
+                                    <TextBlock Text="内置浏览器" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding BrowserStatus}" VerticalAlignment="Center" Opacity="0.7"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding TokenBrush}"/>
+                                    <TextBlock Text="登录凭证" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding TokenStatus}" VerticalAlignment="Center" Opacity="0.7"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding WsBrush}"/>
+                                    <TextBlock Text="结果推送 WS" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding WsStatus}" VerticalAlignment="Center" Opacity="0.7"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding GrabBrush}"/>
+                                    <TextBlock Text="抢课任务" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding GrabStatus}" VerticalAlignment="Center"
+                                               FontWeight="Black" Foreground="{Binding GrabBrush}"/>
+                                </StackPanel>
                             </StackPanel>
-                            <StackPanel Grid.Row="0" Grid.Column="2" Spacing="4">
-                                <TextBlock Text="开抢时间（留空=立即）" FontSize="12" Opacity="0.7"/>
-                                <TextBox Text="{Binding StartAtText}" Watermark="2026-07-30 11:00:00"/>
-                            </StackPanel>
-                            <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4">
-                                <TextBlock Text="类别" FontSize="12" Opacity="0.7"/>
-                                <ComboBox ItemsSource="{Binding ClassTypes}" SelectedItem="{Binding SelectedClassType}"
-                                          HorizontalAlignment="Stretch" MaxDropDownHeight="280"/>
-                            </StackPanel>
-                            <StackPanel Grid.Row="1" Grid.Column="2" Spacing="4">
-                                <TextBlock Text="重试间隔（毫秒）" FontSize="12" Opacity="0.7"/>
-                                <TextBox Text="{Binding IntervalText}" Watermark="建议 200 - 500"/>
+                            <StackPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Right" Spacing="3">
+                                <TextBlock Text="{Binding BatchTail}" FontSize="12" Opacity="0.75" HorizontalAlignment="Right" FontFamily="Consolas"/>
+                                <TextBlock Text="{Binding NetText}" FontSize="12" Opacity="0.6" HorizontalAlignment="Right"/>
+                                <TextBlock Text="作者：太微垣，使用 Kimi K3 制作" FontSize="11" Opacity="0.5" HorizontalAlignment="Right"/>
                             </StackPanel>
                         </Grid>
-                        <TextBlock Text="切换轮次/类别后自动获取类别与课程列表；选 XGKC 类别自动进入志愿模式。"
-                                   FontSize="11" Opacity="0.6" TextWrapping="Wrap"/>
-                    </StackPanel>
-                </material:Card>
+                    </Grid>
+                </Border>
+
+                <!-- 连接 + 抢课设置 -->
+                <Grid Grid.Row="1" ColumnDefinitions="*,12,*" Margin="0,0,0,12">
+
+                    <Border Classes="ef-card" Grid.Column="0" Padding="18,14">
+                        <StackPanel Spacing="10">
+                            <StackPanel>
+                                <Border BorderBrush="#212121" BorderThickness="0,0,0,1"
+                                        HorizontalAlignment="Left" Padding="0,0,0,2">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Border Width="9" Height="9" Background="#FEFE2C" VerticalAlignment="Center"/>
+                                        <TextBlock Text="连接" FontSize="17" FontWeight="Black"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Height="3" Background="#212121" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <Button Content="🌐 内置浏览器登录" Command="{Binding OpenBrowserCommand}"
+                                    Classes="ef-primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                            <TextBlock Text="⚠️ 抢课期间请勿关闭内置浏览器，所有请求都经过它"
+                                       Foreground="#B45309" FontSize="12" TextWrapping="Wrap" FontWeight="SemiBold"/>
+                            <Button Content="🔄 刷新轮次/类别" Command="{Binding RefreshBatchCommand}"
+                                    Classes="ef" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                            <Expander Header="高级设置" IsExpanded="False">
+                                <StackPanel Spacing="8" Margin="0,8,0,0">
+                                    <CheckBox Content="记录浏览器请求（排障用，日志会刷屏）"
+                                              IsChecked="{Binding DebugCapture}"/>
+                                    <Button Content="🔑 检查 token 有效期" Command="{Binding CheckTokenCommand}"
+                                            Classes="ef" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                                </StackPanel>
+                            </Expander>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="ef-card" Grid.Column="2" Padding="18,14">
+                        <StackPanel Spacing="10">
+                            <StackPanel>
+                                <Border BorderBrush="#212121" BorderThickness="0,0,0,1"
+                                        HorizontalAlignment="Left" Padding="0,0,0,2">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Border Width="9" Height="9" Background="#FEFE2C" VerticalAlignment="Center"/>
+                                        <TextBlock Text="抢课设置" FontSize="17" FontWeight="Black"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Height="3" Background="#212121" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <Grid ColumnDefinitions="*,12,*" RowDefinitions="Auto,Auto" RowSpacing="10">
+                                <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="轮次" FontSize="12" Opacity="0.7" FontWeight="SemiBold"/>
+                                    <ComboBox ItemsSource="{Binding Batches}" SelectedItem="{Binding SelectedBatch}"
+                                              HorizontalAlignment="Stretch" MaxDropDownHeight="360"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="0" Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="开抢时间（留空=立即）" FontSize="12" Opacity="0.7" FontWeight="SemiBold"/>
+                                    <TextBox Text="{Binding StartAtText}" Watermark="2026-07-30 11:00:00" FontFamily="Consolas"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="类别" FontSize="12" Opacity="0.7" FontWeight="SemiBold"/>
+                                    <ComboBox ItemsSource="{Binding ClassTypes}" SelectedItem="{Binding SelectedClassType}"
+                                              HorizontalAlignment="Stretch" MaxDropDownHeight="280"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="1" Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="重试间隔（毫秒）" FontSize="12" Opacity="0.7" FontWeight="SemiBold"/>
+                                    <TextBox Text="{Binding IntervalText}" Watermark="建议 200 - 500" FontFamily="Consolas"/>
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock Text="切换轮次/类别后自动获取类别与课程列表；选 XGKC 类别自动进入志愿模式。"
+                                       FontSize="11" Opacity="0.6" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- 课程列表 -->
+                <Border Classes="ef-card" Grid.Row="2" Padding="0">
+                    <Grid RowDefinitions="Auto,Auto,Auto,*">
+                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="18,14,18,10">
+                            <StackPanel Grid.Column="0">
+                                <Border BorderBrush="#212121" BorderThickness="0,0,0,1"
+                                        HorizontalAlignment="Left" Padding="0,0,0,2">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Border Width="9" Height="9" Background="#FEFE2C" VerticalAlignment="Center"/>
+                                        <TextBlock Text="课程列表" FontSize="17" FontWeight="Black"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Height="3" Background="#212121" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="📚 获取课程列表" Command="{Binding FetchCoursesCommand}"
+                                    Classes="ef"/>
+                        </Grid>
+                        <TextBox Grid.Row="1" Text="{Binding SearchText}"
+                                 Watermark="🔍 搜索（课程名/教师/时间…）" Margin="18,0,18,8"/>
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="16" Margin="18,0,18,6">
+                            <TextBlock Text="💡 双击某一行，把它加入右下志愿队列" FontSize="12" Opacity="0.6"/>
+                            <TextBlock Text="{Binding CourseCountText}" FontSize="12" Opacity="0.6"/>
+                        </StackPanel>
+                        <Grid Grid.Row="3" RowDefinitions="Auto,*">
+                            <!-- 表头：黑底黄字 -->
+                            <Grid Grid.Row="0" ColumnDefinitions="3*,1.2*,2.5*,0.8*,0.8*"
+                                  Background="#212121" Margin="18,0,18,0">
+                                <TextBlock Grid.Column="0" Text="课程" FontWeight="Black" Padding="12,8" Foreground="#FEFE2C"/>
+                                <TextBlock Grid.Column="1" Text="教师" FontWeight="Black" Padding="12,8" Foreground="#FEFE2C"/>
+                                <TextBlock Grid.Column="2" Text="时间" FontWeight="Black" Padding="12,8" Foreground="#FEFE2C"/>
+                                <TextBlock Grid.Column="3" Text="容量" FontWeight="Black" Padding="12,8" Foreground="#FEFE2C"/>
+                                <TextBlock Grid.Column="4" Text="已选" FontWeight="Black" Padding="12,8" Foreground="#FEFE2C"/>
+                            </Grid>
+                            <ListBox Grid.Row="1"
+                                     ItemsSource="{Binding FilteredCourses}"
+                                     SelectedItem="{Binding SelectedCourse}"
+                                     Margin="18,0,18,14"
+                                     BorderBrush="#212121" BorderThickness="2,0,2,2"
+                                     DoubleTapped="CourseGrid_DoubleTapped">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:CourseRow">
+                                        <Grid ColumnDefinitions="3*,1.2*,2.5*,0.8*,0.8*">
+                                            <TextBlock Grid.Column="0" Text="{Binding Name}" Padding="12,6"
+                                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                                       FontWeight="SemiBold"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Teacher}" Padding="12,6"
+                                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding Time}" Padding="12,6"
+                                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                                       FontSize="12" Opacity="0.8" FontFamily="Consolas"/>
+                                            <TextBlock Grid.Column="3" Text="{Binding Cap}" Padding="12,6"
+                                                       VerticalAlignment="Center" FontFamily="Consolas"/>
+                                            <TextBlock Grid.Column="4" Text="{Binding Chosen}" Padding="12,6"
+                                                       VerticalAlignment="Center" FontFamily="Consolas"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+                    </Grid>
+                </Border>
             </Grid>
 
-            <!-- 课程列表 -->
-            <material:Card Grid.Row="2" Padding="0">
-                <Grid RowDefinitions="Auto,Auto,Auto,*">
-                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="18,14,18,10">
-                        <TextBlock Grid.Column="0" Text="课程列表" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
-                        <Button Grid.Column="1" Content="📚 获取课程列表" Command="{Binding FetchCoursesCommand}"/>
+            <!-- ============ 右列：日志（上） / 志愿队列（下） ============ -->
+            <Grid Grid.Column="1" RowDefinitions="*,*">
+
+                <!-- 日志 -->
+                <Border Classes="ef-card" Grid.Row="0" Padding="0" Margin="0,0,0,12">
+                    <Grid RowDefinitions="Auto,*">
+                        <StackPanel Grid.Row="0" Margin="18,14,18,8">
+                            <Border BorderBrush="#212121" BorderThickness="0,0,0,1"
+                                    HorizontalAlignment="Left" Padding="0,0,0,2">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Border Width="9" Height="9" Background="#FEFE2C" VerticalAlignment="Center"/>
+                                    <TextBlock Text="日志" FontSize="17" FontWeight="Black"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Height="3" Background="#212121" Margin="0,2,0,0"/>
+                        </StackPanel>
+                        <Border Grid.Row="1" Background="#212121" Padding="12,8" Margin="18,0,18,14">
+                            <Grid>
+                                <Image Source="avares://XsxkAvalonia/Assets/contour-light.png"
+                                       Opacity="0.10" Stretch="UniformToFill" IsHitTestVisible="False"/>
+                                <ScrollViewer x:Name="LogScroll">
+                                    <ItemsControl ItemsSource="{Binding Logs}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:LogLine">
+                                                <TextBlock Text="{Binding Text}" Foreground="{Binding Brush}"
+                                                           FontFamily="Consolas" FontSize="12" TextWrapping="Wrap"/>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </Grid>
+                        </Border>
                     </Grid>
-                    <TextBox Grid.Row="1" Text="{Binding SearchText}"
-                             Watermark="🔍 搜索（课程名/教师/时间…）" Margin="18,0,18,8"/>
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="16" Margin="18,0,18,6">
-                        <TextBlock Text="💡 双击某一行，把它加入右下志愿队列" FontSize="12" Opacity="0.6"/>
-                        <TextBlock Text="{Binding CourseCountText}" FontSize="12" Opacity="0.6"/>
-                    </StackPanel>
-                    <Grid Grid.Row="3" RowDefinitions="Auto,*">
-                        <Grid Grid.Row="0" ColumnDefinitions="3*,1.2*,2.5*,0.8*,0.8*"
-                              Background="#F1F5F9" Margin="18,0,18,0">
-                            <TextBlock Grid.Column="0" Text="课程" FontWeight="Bold" Padding="12,8" Foreground="#475569"/>
-                            <TextBlock Grid.Column="1" Text="教师" FontWeight="Bold" Padding="12,8" Foreground="#475569"/>
-                            <TextBlock Grid.Column="2" Text="时间" FontWeight="Bold" Padding="12,8" Foreground="#475569"/>
-                            <TextBlock Grid.Column="3" Text="容量" FontWeight="Bold" Padding="12,8" Foreground="#475569"/>
-                            <TextBlock Grid.Column="4" Text="已选" FontWeight="Bold" Padding="12,8" Foreground="#475569"/>
+                </Border>
+
+                <!-- 志愿队列 -->
+                <Border Classes="ef-card" Grid.Row="1" Padding="18,14">
+                    <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="10">
+                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto">
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <Border BorderBrush="#212121" BorderThickness="0,0,0,1"
+                                        HorizontalAlignment="Left" Padding="0,0,0,2">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Border Width="9" Height="9" Background="#FEFE2C" VerticalAlignment="Center"/>
+                                        <TextBlock Text="志愿队列" FontSize="17" FontWeight="Black"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Height="3" Background="#212121" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="↑" Command="{Binding MoveUpCommand}"
+                                    Classes="ef" Padding="10,4" Margin="0,0,6,0"/>
+                            <Button Grid.Column="2" Content="↓" Command="{Binding MoveDownCommand}"
+                                    Classes="ef" Padding="10,4"/>
                         </Grid>
-                        <ListBox Grid.Row="1"
-                                 ItemsSource="{Binding FilteredCourses}"
-                                 SelectedItem="{Binding SelectedCourse}"
-                                 Margin="18,0,18,14"
-                                 DoubleTapped="CourseGrid_DoubleTapped">
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12">
+                            <Button Content="✕ 移除所选" Command="{Binding RemoveVolunteerCommand}"
+                                    Classes="ef" Padding="10,4"/>
+                            <Button Content="🗑 清空全部" Command="{Binding ClearVolunteersCommand}"
+                                    Classes="ef" Padding="10,4"/>
+                        </StackPanel>
+                        <ListBox Grid.Row="2"
+                                 ItemsSource="{Binding Volunteers}" SelectedItem="{Binding SelectedVolunteer}"
+                                 MinHeight="80" BorderBrush="#212121" BorderThickness="2">
                             <ListBox.ItemTemplate>
-                                <DataTemplate x:DataType="vm:CourseRow">
-                                    <Grid ColumnDefinitions="3*,1.2*,2.5*,0.8*,0.8*">
-                                        <TextBlock Grid.Column="0" Text="{Binding Name}" Padding="12,6"
-                                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Grid.Column="1" Text="{Binding Teacher}" Padding="12,6"
-                                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Grid.Column="2" Text="{Binding Time}" Padding="12,6"
-                                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
-                                                   FontSize="12" Opacity="0.8"/>
-                                        <TextBlock Grid.Column="3" Text="{Binding Cap}" Padding="12,6"
-                                                   VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="4" Text="{Binding Chosen}" Padding="12,6"
-                                                   VerticalAlignment="Center"/>
-                                    </Grid>
+                                <DataTemplate x:DataType="vm:VolunteerRow">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="{Binding Num, StringFormat='{}{0}.'}" FontWeight="Black"
+                                                   FontFamily="Consolas" Opacity="0.7"/>
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                    </StackPanel>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
+                        <Button Grid.Row="3"
+                                Content="{Binding StartButtonText}" Command="{Binding StartStopCommand}"
+                                Classes="ef-primary" FontSize="17" Padding="0,11"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
                     </Grid>
-                </Grid>
-            </material:Card>
-        </Grid>
-
-        <!-- ============ 右列：日志（上） / 志愿队列（下） ============ -->
-        <Grid Grid.Column="1" RowDefinitions="*,*">
-
-            <!-- 日志 -->
-            <material:Card Grid.Row="0" Padding="0" Margin="0,0,0,12">
-                <Grid RowDefinitions="Auto,*">
-                    <TextBlock Grid.Row="0" Text="日志" FontSize="16" FontWeight="Bold" Margin="18,14,0,8"/>
-                    <Border Grid.Row="1" Background="#1E1E2E" CornerRadius="0,0,4,4" Padding="12,8">
-                        <ScrollViewer x:Name="LogScroll">
-                            <ItemsControl ItemsSource="{Binding Logs}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:LogLine">
-                                        <TextBlock Text="{Binding Text}" Foreground="{Binding Brush}"
-                                                   FontFamily="Consolas" FontSize="12" TextWrapping="Wrap"/>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </ScrollViewer>
-                    </Border>
-                </Grid>
-            </material:Card>
-
-            <!-- 志愿队列 -->
-            <material:Card Grid.Row="1" Padding="18,14">
-                <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="10">
-                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto">
-                        <TextBlock Grid.Column="0" Text="志愿队列" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
-                        <Button Grid.Column="1" Content="↑" Command="{Binding MoveUpCommand}" Padding="10,4" Margin="0,0,6,0"/>
-                        <Button Grid.Column="2" Content="↓" Command="{Binding MoveDownCommand}" Padding="10,4"/>
-                    </Grid>
-                    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12">
-                        <Button Content="✕ 移除所选" Command="{Binding RemoveVolunteerCommand}" Padding="10,4"/>
-                        <Button Content="🗑 清空全部" Command="{Binding ClearVolunteersCommand}" Padding="10,4"/>
-                    </StackPanel>
-                    <ListBox Grid.Row="2"
-                             ItemsSource="{Binding Volunteers}" SelectedItem="{Binding SelectedVolunteer}"
-                             MinHeight="80">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate x:DataType="vm:VolunteerRow">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="{Binding Num, StringFormat='{}{0}.'}" FontWeight="Bold" Opacity="0.7"/>
-                                    <TextBlock Text="{Binding Name}"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                    <Button Grid.Row="3"
-                            Content="{Binding StartButtonText}" Command="{Binding StartStopCommand}"
-                            Classes="contained" FontSize="16" Padding="0,10"
-                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-                </Grid>
-            </material:Card>
+                </Border>
+            </Grid>
         </Grid>
     </Grid>
 </Window>
