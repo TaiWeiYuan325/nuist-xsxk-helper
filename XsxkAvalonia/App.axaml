@@ -10,9 +10,9 @@
         <!-- ======== 终末地工业风（v2.1）======== -->
         <!-- 主题色：亮黄 #FEFE2C / 重黑 #212121 -->
 
-        <!-- 直角黑边卡片 -->
+        <!-- 直角黑边卡片（80% 不透明白，透出底层纹理） -->
         <Style Selector="Border.ef-card">
-            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Background" Value="#CCFFFFFF"/>
             <Setter Property="BorderBrush" Value="#212121"/>
             <Setter Property="BorderThickness" Value="2"/>
             <Setter Property="CornerRadius" Value="0"/>
