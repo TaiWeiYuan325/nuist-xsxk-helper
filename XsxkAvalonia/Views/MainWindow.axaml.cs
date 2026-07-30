@@ -17,7 +17,28 @@ public partial class MainWindow : Window
         _vm = new MainViewModel();
         DataContext = _vm;
         _vm.Logs.CollectionChanged += LogsChanged;
+
+        // 自绘标题栏：拖动移动 / 双击最大化 / 三个窗口按钮
+        var titleBar = this.FindControl<Grid>("TitleBar");
+        if (titleBar is not null)
+        {
+            titleBar.PointerPressed += (_, e) =>
+            {
+                if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+                    BeginMoveDrag(e);
+            };
+            titleBar.DoubleTapped += (_, _) => ToggleMax();
+        }
+        var btnMin = this.FindControl<Button>("BtnMin");
+        var btnMax = this.FindControl<Button>("BtnMax");
+        var btnClose = this.FindControl<Button>("BtnClose");
+        if (btnMin is not null) btnMin.Click += (_, _) => WindowState = WindowState.Minimized;
+        if (btnMax is not null) btnMax.Click += (_, _) => ToggleMax();
+        if (btnClose is not null) btnClose.Click += (_, _) => Close();
     }
+
+    private void ToggleMax()
+        => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
 
     private void LogsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {

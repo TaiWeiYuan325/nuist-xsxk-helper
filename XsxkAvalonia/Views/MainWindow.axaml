@@ -8,12 +8,44 @@
         Width="1440" Height="960" MinWidth="1160" MinHeight="720"
         WindowStartupLocation="CenterScreen"
         Background="#F4F4F2"
-        FontFamily="HarmonyOS Sans SC">
+        FontFamily="HarmonyOS Sans SC"
+        ExtendClientAreaToDecorationsHint="True"
+        WindowDecorations="None"
+        ExtendClientAreaTitleBarHeightHint="40">
 
-    <Grid RowDefinitions="6,*">
+    <Grid RowDefinitions="40,6,*">
+
+        <!-- ============ 自绘标题栏（可拖动 / 双击最大化） ============ -->
+        <Grid Grid.Row="0" x:Name="TitleBar" Background="#F4F4F2">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10"
+                            Margin="14,0,0,0" VerticalAlignment="Center">
+                    <Border Width="14" Height="14" Background="#FEFE2C"
+                            BorderBrush="#212121" BorderThickness="2"/>
+                    <TextBlock Text="南信大选课助手" FontSize="14" FontWeight="Black"/>
+                    <TextBlock Text="// NUIST XSXK HELPER v2.1" FontSize="10" Opacity="0.45"
+                               FontFamily="Consolas" FontWeight="Bold"
+                               VerticalAlignment="Bottom" Margin="2,0,0,1"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button x:Name="BtnMin" Classes="ef-win">
+                        <Path Data="{StaticResource IcWinMin}" Classes="ef-ic" Width="15" Height="15"
+                              Stroke="{Binding $parent[Button].Foreground}"/>
+                    </Button>
+                    <Button x:Name="BtnMax" Classes="ef-win">
+                        <Path Data="{StaticResource IcWinMax}" Classes="ef-ic" Width="15" Height="15"
+                              Stroke="{Binding $parent[Button].Foreground}"/>
+                    </Button>
+                    <Button x:Name="BtnClose" Classes="ef-win">
+                        <Path Data="{StaticResource IcWinClose}" Classes="ef-ic" Width="15" Height="15"
+                              Stroke="{Binding $parent[Button].Foreground}"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Grid>
 
         <!-- 十字准星网格背景（覆盖内容区） -->
-        <Border Grid.Row="1" IsHitTestVisible="False">
+        <Border Grid.Row="2" IsHitTestVisible="False">
             <Border.Background>
                 <DrawingBrush TileMode="Tile" DestinationRect="0,0,56,56" SourceRect="0,0,56,56" Stretch="None">
                     <DrawingBrush.Drawing>
@@ -24,69 +56,66 @@
         </Border>
 
         <!-- 等高线装饰纹理（右下角大幅，透过半透明卡片可见） -->
-        <Image Grid.Row="1" Source="avares://XsxkAvalonia/Assets/contour.png"
+        <Image Grid.Row="2" Source="avares://XsxkAvalonia/Assets/contour.png"
                Width="1500" Opacity="0.10" Stretch="Uniform" IsHitTestVisible="False"
                HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
 
-        <!-- 顶部色条：品红 / 黄 / 绿 + 延伸至边缘的黑粗条 -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal">
+        <!-- 顶部色条（在标题文字下方）：品红 / 黄 / 绿 + 延伸至边缘的黑粗条 -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal">
             <Border Width="72" Background="#FF2D92"/>
             <Border Width="72" Background="#FEFE2C"/>
             <Border Width="72" Background="#00E0A0"/>
             <Border HorizontalAlignment="Stretch" Background="#212121"/>
         </StackPanel>
 
-        <Grid Grid.Row="1" ColumnDefinitions="2*,1*" Margin="14,10,14,12">
+        <Grid Grid.Row="2" ColumnDefinitions="2*,1*" Margin="14,10,14,12">
 
             <!-- ============ 左列：状态 / 连接+抢课设置 / 课程列表 ============ -->
             <Grid Grid.Column="0" RowDefinitions="Auto,Auto,*" Margin="0,0,12,0">
 
                 <!-- 状态监控 -->
                 <Border Classes="ef-card" Grid.Row="0" Padding="18,14" Margin="0,0,0,12">
-                    <Grid>
-                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
-                            <!-- 标题：小黄块 + 中英文 + 等长细线 + 贯穿粗线 -->
-                            <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,8">
-                                <Border BorderBrush="#212121" BorderThickness="0,0,0,1"
-                                        HorizontalAlignment="Left" Padding="0,0,0,2">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <Border Width="9" Height="9" Background="#FEFE2C" VerticalAlignment="Center"/>
-                                        <TextBlock Text="状态监控" FontSize="17" FontWeight="Black"/>
-                                        <TextBlock Text="// STATUS" FontSize="11" Opacity="0.45" FontWeight="Bold"
-                                                   FontFamily="Consolas" VerticalAlignment="Bottom" Margin="2,0,0,2"/>
-                                    </StackPanel>
-                                </Border>
-                                <Border Height="3" Background="#212121" Margin="0,2,0,0"/>
+                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                        <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,8">
+                            <Border BorderBrush="#212121" BorderThickness="0,0,0,1"
+                                    HorizontalAlignment="Left" Padding="0,0,0,2">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Border Width="9" Height="9" Background="#FEFE2C" VerticalAlignment="Center"/>
+                                    <TextBlock Text="状态监控" FontSize="17" FontWeight="Black"/>
+                                    <TextBlock Text="// STATUS" FontSize="11" Opacity="0.45" FontWeight="Bold"
+                                               FontFamily="Consolas" VerticalAlignment="Bottom" Margin="2,0,0,2"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Height="3" Background="#212121" Margin="0,2,0,0"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Spacing="24" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding BrowserBrush}"/>
+                                <TextBlock Text="内置浏览器" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding BrowserStatus}" VerticalAlignment="Center" Opacity="0.7"/>
                             </StackPanel>
-                            <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Spacing="24" VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding BrowserBrush}"/>
-                                    <TextBlock Text="内置浏览器" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                                    <TextBlock Text="{Binding BrowserStatus}" VerticalAlignment="Center" Opacity="0.7"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding TokenBrush}"/>
-                                    <TextBlock Text="登录凭证" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                                    <TextBlock Text="{Binding TokenStatus}" VerticalAlignment="Center" Opacity="0.7"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding WsBrush}"/>
-                                    <TextBlock Text="结果推送 WS" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                                    <TextBlock Text="{Binding WsStatus}" VerticalAlignment="Center" Opacity="0.7"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding GrabBrush}"/>
-                                    <TextBlock Text="抢课任务" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                                    <TextBlock Text="{Binding GrabStatus}" VerticalAlignment="Center"
-                                               FontWeight="Black" Foreground="{Binding GrabBrush}"/>
-                                </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding TokenBrush}"/>
+                                <TextBlock Text="登录凭证" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding TokenStatus}" VerticalAlignment="Center" Opacity="0.7"/>
                             </StackPanel>
-                            <StackPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Right" Spacing="3">
-                                <TextBlock Text="{Binding BatchTail}" FontSize="12" Opacity="0.75" HorizontalAlignment="Right" FontFamily="Consolas"/>
-                                <TextBlock Text="{Binding NetText}" FontSize="12" Opacity="0.6" HorizontalAlignment="Right"/>
-                                <TextBlock Text="作者：太微垣，使用 Kimi K3 制作" FontSize="11" Opacity="0.5" HorizontalAlignment="Right"/>
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding WsBrush}"/>
+                                <TextBlock Text="结果推送 WS" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding WsStatus}" VerticalAlignment="Center" Opacity="0.7"/>
                             </StackPanel>
-                        </Grid>
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding GrabBrush}"/>
+                                <TextBlock Text="抢课任务" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding GrabStatus}" VerticalAlignment="Center"
+                                           FontWeight="Black" Foreground="{Binding GrabBrush}"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Right" Spacing="3">
+                            <TextBlock Text="{Binding BatchTail}" FontSize="12" Opacity="0.75" HorizontalAlignment="Right" FontFamily="Consolas"/>
+                            <TextBlock Text="{Binding NetText}" FontSize="12" Opacity="0.6" HorizontalAlignment="Right"/>
+                            <TextBlock Text="作者：太微垣，使用 Kimi K3 制作" FontSize="11" Opacity="0.5" HorizontalAlignment="Right"/>
+                        </StackPanel>
                     </Grid>
                 </Border>
 
@@ -107,18 +136,40 @@
                                 </Border>
                                 <Border Height="3" Background="#212121" Margin="0,2,0,0"/>
                             </StackPanel>
-                            <Button Content="🌐 内置浏览器登录" Command="{Binding OpenBrowserCommand}"
-                                    Classes="ef-primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-                            <TextBlock Text="⚠️ 抢课期间请勿关闭内置浏览器，所有请求都经过它"
-                                       Foreground="#B45309" FontSize="12" TextWrapping="Wrap" FontWeight="SemiBold"/>
-                            <Button Content="🔄 刷新轮次/类别" Command="{Binding RefreshBatchCommand}"
-                                    Classes="ef" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                            <Button Command="{Binding OpenBrowserCommand}"
+                                    Classes="ef-primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Path Data="{StaticResource IcGlobe}" Classes="ef-ic" Width="16" Height="16"
+                                          Stroke="{Binding $parent[Button].Foreground}"/>
+                                    <TextBlock Text="内置浏览器登录" FontWeight="Black"/>
+                                </StackPanel>
+                            </Button>
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Path Data="{StaticResource IcWarn}" Classes="ef-ic" Width="15" Height="15"
+                                      Stroke="#B45309" VerticalAlignment="Top" Margin="0,1,0,0"/>
+                                <TextBlock Text="抢课期间请勿关闭内置浏览器，所有请求都经过它"
+                                           Foreground="#B45309" FontSize="12" TextWrapping="Wrap" FontWeight="SemiBold"/>
+                            </StackPanel>
+                            <Button Command="{Binding RefreshBatchCommand}"
+                                    Classes="ef" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Path Data="{StaticResource IcRefresh}" Classes="ef-ic" Width="15" Height="15"
+                                          Stroke="{Binding $parent[Button].Foreground}"/>
+                                    <TextBlock Text="刷新轮次/类别" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Button>
                             <Expander Header="高级设置" IsExpanded="False">
                                 <StackPanel Spacing="8" Margin="0,8,0,0">
                                     <CheckBox Content="记录浏览器请求（排障用，日志会刷屏）"
                                               IsChecked="{Binding DebugCapture}"/>
-                                    <Button Content="🔑 检查 token 有效期" Command="{Binding CheckTokenCommand}"
-                                            Classes="ef" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                                    <Button Command="{Binding CheckTokenCommand}"
+                                            Classes="ef" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Path Data="{StaticResource IcKey}" Classes="ef-ic" Width="15" Height="15"
+                                                  Stroke="{Binding $parent[Button].Foreground}"/>
+                                            <TextBlock Text="检查 token 有效期" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Button>
                                 </StackPanel>
                             </Expander>
                         </StackPanel>
@@ -180,17 +231,30 @@
                                 </Border>
                                 <Border Height="3" Background="#212121" Margin="0,2,0,0"/>
                             </StackPanel>
-                            <Button Grid.Column="1" Content="📚 获取课程列表" Command="{Binding FetchCoursesCommand}"
-                                    Classes="ef"/>
+                            <Button Grid.Column="1" Command="{Binding FetchCoursesCommand}" Classes="ef">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Path Data="{StaticResource IcList}" Classes="ef-ic" Width="15" Height="15"
+                                          Stroke="{Binding $parent[Button].Foreground}"/>
+                                    <TextBlock Text="获取课程列表" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Button>
                         </Grid>
-                        <TextBox Grid.Row="1" Text="{Binding SearchText}"
-                                 Watermark="🔍 搜索（课程名/教师/时间…）" Margin="18,0,18,8"/>
+                        <Grid Grid.Row="1" ColumnDefinitions="Auto,*" Margin="18,0,18,8">
+                            <Path Grid.Column="0" Data="{StaticResource IcSearch}" Classes="ef-ic"
+                                  Width="16" Height="16" Stroke="#212121"
+                                  VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBox Grid.Column="1" Text="{Binding SearchText}"
+                                     Watermark="搜索（课程名/教师/时间…）"/>
+                        </Grid>
                         <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="16" Margin="18,0,18,6">
-                            <TextBlock Text="💡 双击某一行，把它加入右下志愿队列" FontSize="12" Opacity="0.6"/>
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Path Data="{StaticResource IcBulb}" Classes="ef-ic" Width="14" Height="14"
+                                      Stroke="#212121" Opacity="0.6" VerticalAlignment="Center"/>
+                                <TextBlock Text="双击某一行，把它加入右下志愿队列" FontSize="12" Opacity="0.6"/>
+                            </StackPanel>
                             <TextBlock Text="{Binding CourseCountText}" FontSize="12" Opacity="0.6"/>
                         </StackPanel>
                         <Grid Grid.Row="3" RowDefinitions="Auto,*">
-                            <!-- 表头：黑底黄字 -->
                             <Grid Grid.Row="0" ColumnDefinitions="3*,1.2*,2.5*,0.8*,0.8*"
                                   Background="#212121" Margin="18,0,18,0">
                                 <TextBlock Grid.Column="0" Text="课程" FontWeight="Black" Padding="12,8" Foreground="#FEFE2C"/>
@@ -203,6 +267,7 @@
                                      ItemsSource="{Binding FilteredCourses}"
                                      SelectedItem="{Binding SelectedCourse}"
                                      Margin="18,0,18,14"
+                                     Background="Transparent"
                                      BorderBrush="#212121" BorderThickness="2,0,2,2"
                                      DoubleTapped="CourseGrid_DoubleTapped">
                                 <ListBox.ItemTemplate>
@@ -276,26 +341,43 @@
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <Border Width="9" Height="9" Background="#FEFE2C" VerticalAlignment="Center"/>
                                         <TextBlock Text="志愿队列" FontSize="17" FontWeight="Black"/>
-                                        <TextBlock Text="// VOLUNTEERS" FontSize="11" Opacity="0.45" FontWeight="Bold"
+                                        <TextBlock Text="// PREFERENCE" FontSize="11" Opacity="0.45" FontWeight="Bold"
                                                    FontFamily="Consolas" VerticalAlignment="Bottom" Margin="2,0,0,2"/>
                                     </StackPanel>
                                 </Border>
                                 <Border Height="3" Background="#212121" Margin="0,2,0,0"/>
                             </StackPanel>
-                            <Button Grid.Column="1" Content="↑" Command="{Binding MoveUpCommand}"
-                                    Classes="ef" Padding="10,4" Margin="0,0,6,0"/>
-                            <Button Grid.Column="2" Content="↓" Command="{Binding MoveDownCommand}"
-                                    Classes="ef" Padding="10,4"/>
+                            <Button Grid.Column="1" Command="{Binding MoveUpCommand}"
+                                    Classes="ef" Padding="10,4" Margin="0,0,6,0">
+                                <Path Data="{StaticResource IcArrowUp}" Classes="ef-ic" Width="14" Height="14"
+                                      Stroke="{Binding $parent[Button].Foreground}"/>
+                            </Button>
+                            <Button Grid.Column="2" Command="{Binding MoveDownCommand}"
+                                    Classes="ef" Padding="10,4">
+                                <Path Data="{StaticResource IcArrowDown}" Classes="ef-ic" Width="14" Height="14"
+                                      Stroke="{Binding $parent[Button].Foreground}"/>
+                            </Button>
                         </Grid>
                         <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12">
-                            <Button Content="✕ 移除所选" Command="{Binding RemoveVolunteerCommand}"
-                                    Classes="ef" Padding="10,4"/>
-                            <Button Content="🗑 清空全部" Command="{Binding ClearVolunteersCommand}"
-                                    Classes="ef" Padding="10,4"/>
+                            <Button Command="{Binding RemoveVolunteerCommand}" Classes="ef" Padding="10,4">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Path Data="{StaticResource IcX}" Classes="ef-ic" Width="13" Height="13"
+                                          Stroke="{Binding $parent[Button].Foreground}"/>
+                                    <TextBlock Text="移除所选" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding ClearVolunteersCommand}" Classes="ef" Padding="10,4">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Path Data="{StaticResource IcTrash}" Classes="ef-ic" Width="13" Height="13"
+                                          Stroke="{Binding $parent[Button].Foreground}"/>
+                                    <TextBlock Text="清空全部" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                         <ListBox Grid.Row="2"
                                  ItemsSource="{Binding Volunteers}" SelectedItem="{Binding SelectedVolunteer}"
-                                 MinHeight="80" BorderBrush="#212121" BorderThickness="2">
+                                 MinHeight="80" Background="Transparent"
+                                 BorderBrush="#212121" BorderThickness="2">
                             <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="vm:VolunteerRow">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
@@ -306,10 +388,19 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
-                        <Button Grid.Row="3"
-                                Content="{Binding StartButtonText}" Command="{Binding StartStopCommand}"
+                        <Button Grid.Row="3" Command="{Binding StartStopCommand}"
                                 Classes="ef-primary" FontSize="17" Padding="0,11"
-                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Path Data="{StaticResource IcRocket}" Classes="ef-ic" Width="18" Height="18"
+                                      Stroke="{Binding $parent[Button].Foreground}"
+                                      IsVisible="{Binding !IsGrabbing}"/>
+                                <Path Data="{StaticResource IcStop}" Classes="ef-ic" Width="18" Height="18"
+                                      Stroke="{Binding $parent[Button].Foreground}"
+                                      IsVisible="{Binding IsGrabbing}"/>
+                                <TextBlock Text="{Binding StartButtonText}" FontWeight="Black"/>
+                            </StackPanel>
+                        </Button>
                     </Grid>
                 </Border>
             </Grid>
