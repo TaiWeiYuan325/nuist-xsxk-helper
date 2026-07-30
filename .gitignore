@@ -33,3 +33,7 @@ XsxkWinUI/poll.cmd
 XsxkWinUI/wer.cmd
 XsxkWinUI/xc*.out
 XsxkWinUI/env-*.txt
+
+# ── 工具 ──
+ghcli/
+gh_auth.log
