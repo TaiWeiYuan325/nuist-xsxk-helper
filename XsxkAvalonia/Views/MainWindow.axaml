@@ -8,7 +8,7 @@
         Width="1360" Height="920" MinWidth="1160" MinHeight="720"
         WindowStartupLocation="CenterScreen"
         Background="#F4F4F2"
-        FontFamily="HarmonyOS Sans SC"
+        FontFamily="avares://XsxkAvalonia/Assets/Fonts/#HarmonyOS Sans SC"
         ExtendClientAreaToDecorationsHint="True"
         WindowDecorations="None"
         ExtendClientAreaTitleBarHeightHint="40">
