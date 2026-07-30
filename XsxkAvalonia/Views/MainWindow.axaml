@@ -5,7 +5,7 @@
         x:Class="XsxkAvalonia.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Title="南信大选课助手 v2.1"
-        Width="1440" Height="960" MinWidth="1160" MinHeight="720"
+        Width="1360" Height="920" MinWidth="1160" MinHeight="720"
         WindowStartupLocation="CenterScreen"
         Background="#F4F4F2"
         FontFamily="HarmonyOS Sans SC"
@@ -67,10 +67,10 @@
             <Border HorizontalAlignment="Stretch" Background="#212121"/>
         </StackPanel>
 
-        <Grid Grid.Row="2" ColumnDefinitions="2*,56,1*" Margin="14,10,14,12">
+        <Grid Grid.Row="2" ColumnDefinitions="*,480" Margin="14,10,14,12">
 
-            <!-- ============ 左列：状态 / 连接+抢课设置 / 课程列表 ============ -->
-            <Grid Grid.Column="0" RowDefinitions="Auto,Auto,*">
+            <!-- ============ 左列：状态 / 连接+抢课设置 / 课程列表（窗口拉宽时仅本列变宽） ============ -->
+            <Grid Grid.Column="0" RowDefinitions="Auto,Auto,*" Margin="0,0,12,0">
 
                 <!-- 状态监控 -->
                 <Border Classes="ef-card" Grid.Row="0" Padding="18,14" Margin="0,0,0,12">
@@ -258,7 +258,7 @@
                             <TextBlock Text="{Binding CourseCountText}" FontSize="12" Opacity="0.6"/>
                         </StackPanel>
                         <Grid Grid.Row="3" RowDefinitions="Auto,*">
-                            <Grid Grid.Row="0" ColumnDefinitions="3*,1.2*,2.5*,0.8*,0.8*"
+                            <Grid Grid.Row="0" ColumnDefinitions="3.4*,1.1*,2.2*,0.7*,0.7*"
                                   Background="#212121" Margin="18,0,18,0">
                                 <TextBlock Grid.Column="0" Text="课程" FontWeight="Black" Padding="12,8" Foreground="#FEFE2C"/>
                                 <TextBlock Grid.Column="1" Text="教师" FontWeight="Black" Padding="12,8" Foreground="#FEFE2C"/>
@@ -275,7 +275,7 @@
                                      DoubleTapped="CourseGrid_DoubleTapped">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate x:DataType="vm:CourseRow">
-                                        <Grid ColumnDefinitions="3*,1.2*,2.5*,0.8*,0.8*">
+                                        <Grid ColumnDefinitions="3.4*,1.1*,2.2*,0.7*,0.7*">
                                             <TextBlock Grid.Column="0" Text="{Binding Name}" Padding="12,6"
                                                        VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                                                        FontWeight="SemiBold"/>
@@ -297,24 +297,8 @@
                 </Border>
             </Grid>
 
-            <!-- ============ 中缝：加入志愿队列按钮（竖排文字 + 右箭头） ============ -->
-            <Grid Grid.Column="1" RowDefinitions="*,*">
-                <Button Grid.Row="1" Classes="ef-primary"
-                        VerticalAlignment="Center" HorizontalAlignment="Center"
-                        Width="42" Padding="0,16"
-                        Command="{Binding AddCourseCommand}"
-                        CommandParameter="{Binding SelectedCourse}">
-                    <StackPanel Spacing="10" HorizontalAlignment="Center">
-                        <Path Data="{StaticResource IcArrowRight}" Classes="ef-ic" Width="16" Height="16"
-                              Stroke="{Binding $parent[Button].Foreground}" HorizontalAlignment="Center"/>
-                        <TextBlock Text="加入志愿队列" FontWeight="Black" FontSize="13"
-                                   Width="18" TextWrapping="Wrap" TextAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-            </Grid>
-
             <!-- ============ 右列：日志（上） / 志愿队列（下） ============ -->
-            <Grid Grid.Column="2" RowDefinitions="*,*">
+            <Grid Grid.Column="1" RowDefinitions="*,*">
 
                 <!-- 日志（保持不透明白卡） -->
                 <Border Classes="ef-card" Grid.Row="0" Padding="0" Margin="0,0,0,12" Background="#FFFFFF">
@@ -414,6 +398,20 @@
                         </Button>
                     </Grid>
                 </Border>
+
+                <!-- 悬浮在课程列表与志愿队列之间的「加入志愿队列」按钮（骑跨两卡片边缘） -->
+                <Button Grid.Row="1" Classes="ef-primary"
+                        HorizontalAlignment="Left" VerticalAlignment="Center"
+                        Width="42" Padding="0,16" Margin="-27,0,0,0"
+                        Command="{Binding AddCourseCommand}"
+                        CommandParameter="{Binding SelectedCourse}">
+                    <StackPanel Spacing="10" HorizontalAlignment="Center">
+                        <Path Data="{StaticResource IcArrowRight}" Classes="ef-ic" Width="16" Height="16"
+                              Stroke="{Binding $parent[Button].Foreground}" HorizontalAlignment="Center"/>
+                        <TextBlock Text="加入志愿队列" FontWeight="Black" FontSize="13"
+                                   Width="18" TextWrapping="Wrap" TextAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </Grid>
         </Grid>
     </Grid>
