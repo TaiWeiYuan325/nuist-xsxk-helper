@@ -15,13 +15,11 @@
 
     <Grid RowDefinitions="40,6,*">
 
-        <!-- ============ 自绘标题栏（可拖动 / 双击最大化） ============ -->
-        <Grid Grid.Row="0" x:Name="TitleBar" Background="#F4F4F2">
+        <!-- ============ 自绘标题栏（可拖动 / 双击最大化，透明底透出纹理） ============ -->
+        <Grid Grid.Row="0" x:Name="TitleBar" Background="Transparent">
             <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10"
                             Margin="14,0,0,0" VerticalAlignment="Center">
-                    <Border Width="14" Height="14" Background="#FEFE2C"
-                            BorderBrush="#212121" BorderThickness="2"/>
                     <TextBlock Text="南信大选课助手" FontSize="14" FontWeight="Black"/>
                     <TextBlock Text="// NUIST XSXK HELPER v2.1" FontSize="10" Opacity="0.45"
                                FontFamily="Consolas" FontWeight="Bold"
@@ -45,8 +43,8 @@
             </Grid>
         </Grid>
 
-        <!-- 十字准星网格背景（覆盖内容区） -->
-        <Border Grid.Row="2" IsHitTestVisible="False">
+        <!-- 十字准星网格背景（覆盖整个窗口，含标题栏） -->
+        <Border Grid.Row="0" Grid.RowSpan="3" IsHitTestVisible="False">
             <Border.Background>
                 <DrawingBrush TileMode="Tile" DestinationRect="0,0,56,56" SourceRect="0,0,56,56" Stretch="None">
                     <DrawingBrush.Drawing>
@@ -56,8 +54,8 @@
             </Border.Background>
         </Border>
 
-        <!-- 等高线装饰纹理（右下角大幅，透过半透明卡片可见） -->
-        <Image Grid.Row="2" Source="avares://XsxkAvalonia/Assets/contour.png"
+        <!-- 等高线装饰纹理（右下角大幅，覆盖整个窗口，透过半透明卡片与标题栏可见） -->
+        <Image Grid.Row="0" Grid.RowSpan="3" Source="avares://XsxkAvalonia/Assets/contour.png"
                Width="1500" Opacity="0.10" Stretch="Uniform" IsHitTestVisible="False"
                HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
 
@@ -223,7 +221,7 @@
                 <!-- 课程列表 -->
                 <Border Classes="ef-card" Grid.Row="2" Padding="0">
                     <Grid RowDefinitions="Auto,Auto,Auto,*">
-                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="18,14,18,10">
+                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="18,14,18,10">
                             <StackPanel Grid.Column="0">
                                 <Border BorderBrush="#212121" BorderThickness="0,0,0,1"
                                         HorizontalAlignment="Left" Padding="0,0,0,2">
@@ -236,7 +234,16 @@
                                 </Border>
                                 <Border Height="3" Background="#212121" Margin="0,2,0,0"/>
                             </StackPanel>
-                            <Button Grid.Column="1" Command="{Binding FetchCoursesCommand}" Classes="ef">
+                            <Button Grid.Column="1" Classes="ef-primary" Margin="0,0,8,0"
+                                    Command="{Binding AddCourseCommand}"
+                                    CommandParameter="{Binding SelectedCourse}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Path Data="{StaticResource IcArrowDown}" Classes="ef-ic" Width="14" Height="14"
+                                          Stroke="{Binding $parent[Button].Foreground}"/>
+                                    <TextBlock Text="加入志愿队列" FontWeight="Black"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="2" Command="{Binding FetchCoursesCommand}" Classes="ef">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <Path Data="{StaticResource IcList}" Classes="ef-ic" Width="15" Height="15"
                                           Stroke="{Binding $parent[Button].Foreground}"/>
@@ -255,7 +262,7 @@
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <Path Data="{StaticResource IcBulb}" Classes="ef-ic" Width="14" Height="14"
                                       Stroke="#212121" Opacity="0.6" VerticalAlignment="Center"/>
-                                <TextBlock Text="双击某一行，把它加入右下志愿队列" FontSize="12" Opacity="0.6"/>
+                                <TextBlock Text="单击选中一行，点右上角黄色「加入志愿队列」按钮（也可双击该行直接加入）" FontSize="12" Opacity="0.6"/>
                             </StackPanel>
                             <TextBlock Text="{Binding CourseCountText}" FontSize="12" Opacity="0.6"/>
                         </StackPanel>
