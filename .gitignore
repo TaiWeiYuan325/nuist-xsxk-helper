@@ -1,6 +1,8 @@
 # ── 构建/发行产物 ──
 dist/
 dist-v2/
+dist-v3/
+XsxkAvalonia/publish/
 build/
 *.zip
 XsxkWinUI/bin/
