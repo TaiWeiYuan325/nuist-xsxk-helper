@@ -1,0 +1,35 @@
+# ── 构建/发行产物 ──
+dist/
+build/
+*.zip
+XsxkWinUI/bin/
+XsxkWinUI/obj/
+*.spec
+
+# ── 运行期数据（含登录态/日志）──
+.browser-profile/
+pw-browsers/
+*.log
+__pycache__/
+*.pyc
+
+# ── 临时工具脚本 ──
+mklnk.ps1
+rdlnk.ps1
+testlnk.ps1
+findproc.ps1
+chk.cmd
+nohup.out
+
+# ── 参考仓库/测试数据/调试产物 ──
+ref-xsxk-nuist/
+ref_common.py
+ref_course.py
+test_session.json
+XsxkWinUI/XcWrap.cmd*
+XsxkWinUI/checkxaml*.cmd
+XsxkWinUI/dumpenv.cmd
+XsxkWinUI/poll.cmd
+XsxkWinUI/wer.cmd
+XsxkWinUI/xc*.out
+XsxkWinUI/env-*.txt

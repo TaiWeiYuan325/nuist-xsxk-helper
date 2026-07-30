@@ -1,0 +1,287 @@
+<Window
+    x:Class="XsxkWinUI.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="南信大选课助手">
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.Resources>
+            <Style x:Key="CardStyle" TargetType="Border">
+                <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}"/>
+                <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="12"/>
+            </Style>
+        </Grid.Resources>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="300"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="320"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ═══ 左上：状态监控 + 连接/抢课设置 ═══ -->
+        <Grid Grid.Row="0" Grid.Column="0" Margin="16,12,8,12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- 状态监控 -->
+            <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="状态监控" FontWeight="SemiBold" FontSize="14"/>
+                    <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtCountdown" Text="" FontSize="15"
+                               TextWrapping="NoWrap" HorizontalAlignment="Right"
+                               FontWeight="Bold" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                    <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Spacing="6" Margin="0,8,0,0">
+                        <Ellipse x:Name="DotBackend" Width="10" Height="10" Fill="Gray" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="TxtBackend" Text="后端未连接" VerticalAlignment="Center" FontSize="13"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="6" Margin="0,8,0,0">
+                        <Ellipse x:Name="DotLogin" Width="10" Height="10" Fill="Gray" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="TxtLogin" Text="未登录" VerticalAlignment="Center" FontSize="13"/>
+                    </StackPanel>
+                    <TextBlock Grid.Row="2" Grid.Column="0" x:Name="TxtNet" Text="🌐 校时中…"
+                               FontSize="13" Margin="0,4,0,0"/>
+                    <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtBatch" Text="" FontSize="13"
+                               Foreground="Gray" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
+                               Text="作者：太微垣，使用Kimi K3制作" FontSize="11" Foreground="Gray"
+                               HorizontalAlignment="Right" Margin="0,8,0,0" Opacity="0.7"/>
+                </Grid>
+            </Border>
+
+            <!-- 连接 + 抢课设置 -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="0.8*"/>
+                    <ColumnDefinition Width="1.2*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 连接（含高级设置折叠） -->
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,8,0" Padding="12,12,6,12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="连接" FontWeight="SemiBold" FontSize="14"/>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,8,0,0" Padding="0,0,6,0">
+                            <StackPanel Spacing="8">
+                                <Button x:Name="BtnBrowser" Content="🌐 内置浏览器登录" Click="BtnBrowser_Click"
+                                        HorizontalAlignment="Stretch"/>
+                                <TextBlock Text="⚠️ 抢课期间请勿关闭内置浏览器，所有请求都经过它" FontSize="11"
+                                           Foreground="DarkOrange" TextWrapping="Wrap"/>
+                                <Button x:Name="BtnRefresh" Content="🔄 刷新轮次/类别" Click="BtnRefresh_Click"
+                                        HorizontalAlignment="Stretch"/>
+                                <Expander Header="高级设置（一般不用动）" IsExpanded="False">
+                                    <StackPanel Spacing="6" Padding="0,4,0,4">
+                                        <TextBlock Text="服务器" FontSize="12" Foreground="Gray"/>
+                                        <TextBox x:Name="TxtBase" LostFocus="Setting_LostFocus"/>
+                                        <TextBlock Text="Authorization" FontSize="12" Foreground="Gray"/>
+                                        <PasswordBox x:Name="TxtAuth" PasswordChanged="Setting_PasswordChanged"/>
+                                        <TextBlock Text="batchid" FontSize="12" Foreground="Gray"/>
+                                        <TextBox x:Name="TxtBatchId" LostFocus="Setting_LostFocus"/>
+                                        <TextBlock Text="校区" FontSize="12" Foreground="Gray"/>
+                                        <TextBox x:Name="TxtCampus" LostFocus="Setting_LostFocus" Width="80" HorizontalAlignment="Left"/>
+                                        <Button Content="✅ 验证 Token" Click="BtnCheckToken_Click" HorizontalAlignment="Stretch"/>
+                                        <CheckBox x:Name="ChkDebug" Checked="ChkDebug_Toggled" Unchecked="ChkDebug_Toggled">
+                                            <TextBlock Text="记录浏览器请求（调试用，日志会刷屏）" TextWrapping="Wrap" FontSize="12"/>
+                                        </CheckBox>
+                                    </StackPanel>
+                                </Expander>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+
+                <!-- 抢课设置（左：轮次/类别 右：开抢时间/重试间隔） -->
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}" Padding="12,12,6,12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="抢课设置" FontWeight="SemiBold" FontSize="14"/>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,8,0,0" Padding="0,0,6,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Spacing="6" Margin="0,0,6,0">
+                                    <TextBlock Text="轮次" FontSize="12" Foreground="Gray"/>
+                                    <ComboBox x:Name="CmbBatch" HorizontalAlignment="Stretch"
+                                              SelectionChanged="CmbBatch_SelectionChanged"/>
+                                    <TextBlock Text="类别" FontSize="12" Foreground="Gray"/>
+                                    <ComboBox x:Name="CmbType" HorizontalAlignment="Stretch"
+                                              SelectionChanged="CmbType_SelectionChanged"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Spacing="6">
+                                    <TextBlock Text="开抢时间（留空=立即）" FontSize="12" Foreground="Gray" TextWrapping="Wrap"/>
+                                    <TextBox x:Name="TxtStartAt" PlaceholderText="2026-07-30 10:00" LostFocus="Setting_LostFocus"/>
+                                    <TextBlock Text="重试间隔（毫秒）" FontSize="12" Foreground="Gray"/>
+                                    <NumberBox x:Name="NumInterval" Minimum="50" Maximum="10000" Value="400"
+                                               SpinButtonPlacementMode="Inline" ValueChanged="NumInterval_ValueChanged"/>
+                                    <TextBlock Text="💡 志愿模式自动开启：选通识课(XGKC)时启用" FontSize="11"
+                                               Foreground="Gray" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </Grid>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- ═══ 右上：志愿队列 ═══ -->
+        <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardStyle}" Margin="0,12,16,12">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0" Margin="0,0,0,6">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="志愿队列" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                    <Button Grid.Row="0" Grid.Column="1" Content="↑" Click="BtnVolUp_Click" Padding="10,4"
+                            ToolTipService.ToolTip="上移所选志愿"/>
+                    <Button Grid.Row="0" Grid.Column="2" Content="↓" Click="BtnVolDown_Click" Padding="10,4" Margin="6,0,0,0"
+                            ToolTipService.ToolTip="下移所选志愿"/>
+                    <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal"
+                                Spacing="12" Margin="0,4,0,0">
+                        <HyperlinkButton Content="✕ 移除所选" Click="BtnVolDel_Click" FontSize="12" Padding="0"/>
+                        <HyperlinkButton Content="🗑 清空全部" Click="BtnVolClear_Click" FontSize="12" Padding="0"
+                                         Foreground="IndianRed"/>
+                    </StackPanel>
+                </Grid>
+                <ListView Grid.Row="1" x:Name="LstVols" SelectionMode="Single">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Display}" TextWrapping="Wrap" FontSize="13" Padding="2,4"/>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <StackPanel Grid.Row="2" Spacing="8" Margin="0,8,0,0">
+                    <InfoBar x:Name="BarResult" IsOpen="False" Severity="Success" Message=""
+                             IsClosable="False"/>
+                    <Button x:Name="BtnGo" Content="🚀 开始抢课" Click="BtnGo_Click"
+                            HorizontalAlignment="Stretch" MinHeight="44"
+                            Style="{ThemeResource AccentButtonStyle}" FontSize="16"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ═══ 左下：课程列表（直到窗口底部） ═══ -->
+        <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource CardStyle}" Margin="16,0,8,12">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="课程列表" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                    <Button Grid.Column="2" Content="📚 获取课程列表" Click="BtnFetch_Click"/>
+                </Grid>
+                <TextBox Grid.Row="1" x:Name="TxtSearch" PlaceholderText="搜索（课程名/教师/时间…）"
+                         HorizontalAlignment="Stretch" Margin="0,0,0,4"
+                         TextChanged="TxtSearch_TextChanged"/>
+                <TextBlock Grid.Row="2" Text="💡 双击某一行，把它加入右侧志愿队列" FontSize="12"
+                           Foreground="Gray" Margin="2,0,0,8"/>
+                <!-- 表头 -->
+                <Grid Grid.Row="3" Padding="8,4" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2.6*"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="2.4*"/>
+                        <ColumnDefinition Width="0.7*"/>
+                        <ColumnDefinition Width="0.7*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="课程" FontSize="12" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="1" Text="教师" FontSize="12" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="2" Text="时间" FontSize="12" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="3" Text="容量" FontSize="12" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="4" Text="已选" FontSize="12" FontWeight="SemiBold"/>
+                </Grid>
+                <ListView Grid.Row="4" x:Name="LstCourses" SelectionMode="Single"
+                          DoubleTapped="LstCourses_DoubleTapped" IsItemClickEnabled="True"
+                          ItemClick="LstCourses_ItemClick">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Padding="8,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2.6*"/>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="2.4*"/>
+                                    <ColumnDefinition Width="0.7*"/>
+                                    <ColumnDefinition Width="0.7*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding Name}" TextTrimming="CharacterEllipsis" FontSize="13"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Teacher}" TextTrimming="CharacterEllipsis" FontSize="13"/>
+                                <TextBlock Grid.Column="2" Text="{Binding Time}" TextTrimming="CharacterEllipsis" FontSize="12" Foreground="Gray"/>
+                                <TextBlock Grid.Column="3" Text="{Binding Cap}" FontSize="13"/>
+                                <TextBlock Grid.Column="4" Text="{Binding Chosen}" FontSize="13"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
+        </Border>
+
+        <!-- ═══ 右下：日志（直到窗口底部） ═══ -->
+        <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardStyle}" Margin="0,0,16,12" Padding="12,12,6,12">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="日志" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,6"/>
+                <Border Grid.Row="1" Background="#FF1B1B1B" CornerRadius="6" Padding="8,4" Margin="0,0,0,0">
+                    <ListView x:Name="LstLog" SelectionMode="None">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Text}" Foreground="{Binding Color}"
+                                           FontFamily="Consolas" FontSize="12" Padding="0,1" TextWrapping="Wrap"/>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                        <ListView.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <ItemsStackPanel VerticalAlignment="Bottom"/>
+                            </ItemsPanelTemplate>
+                        </ListView.ItemsPanel>
+                    </ListView>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
