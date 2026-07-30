@@ -75,7 +75,8 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _grabStatus = "待命";
     [ObservableProperty] private IBrush _grabBrush = Brushes.Gray;
     [ObservableProperty] private string _netText = "校时未开始";
-    [ObservableProperty] private string _startButtonText = "🚀 开始抢课";
+    [ObservableProperty] private string _startButtonText = "开始抢课";
+    [ObservableProperty] private bool _isGrabbing;
     [ObservableProperty] private string _courseCountText = "0 门课程";
 
     public MainViewModel()
@@ -144,7 +145,8 @@ public partial class MainViewModel : ObservableObject
             WsBrush = e.WsConnected ? Brushes.ForestGreen : Brushes.Gray;
             GrabStatus = e.Grabbing ? "抢课中" : "待命";
             GrabBrush = e.Grabbing ? new SolidColorBrush(Color.Parse("#E11D48")) : Brushes.Gray;
-            StartButtonText = e.Grabbing ? "⏹ 停止抢课" : "🚀 开始抢课";
+            StartButtonText = e.Grabbing ? "停止抢课" : "开始抢课";
+            IsGrabbing = e.Grabbing;
             if (!string.IsNullOrEmpty(e.NetText)) NetText = e.NetText;
             DebugCapture = e.Browser.DebugCapture;
         }
