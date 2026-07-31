@@ -4,7 +4,7 @@
 
 > 作者：太微垣，使用 Kimi K3 制作
 
-![界面截图](docs/screenshot-v2.1.png)
+![界面截图](docs/screenshot-v3.png)
 
 ## 下载
 
