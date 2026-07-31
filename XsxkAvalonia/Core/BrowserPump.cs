@@ -52,6 +52,7 @@ public sealed class BrowserPump : IDisposable
         catch { UserAgent = ""; }
         Alive = true;
         _engine.Log("内置 Chromium 已打开，请登录选课系统（抢课期间请勿关闭此浏览器窗口）");
+        _engine.Log("ℹ️ 登录成功后无需手动操作，稍候会自动捕获轮次、加载类别与课程列表");
         _engine.NotifyState();
         // 浏览器被手动关闭时更新状态
         _ = Task.Run(async () =>

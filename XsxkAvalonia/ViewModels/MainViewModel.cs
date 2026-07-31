@@ -103,6 +103,8 @@ public partial class MainViewModel : ObservableObject
     public string GetAllLogText() => string.Join("\n", Logs.Select(l => l.Text));
     public void AddLocalLog(string m) => AddLog(m);
 
+    private string _lastStartAtPush = "";
+
     private void SyncFromEngine()
     {
         var e = Engine;
@@ -134,9 +136,14 @@ public partial class MainViewModel : ObservableObject
             // 批次
             BatchTail = string.IsNullOrEmpty(e.Batch) ? "批次 未捕获"
                 : $"批次 …{(e.Batch.Length <= 8 ? e.Batch : e.Batch[^8..])}";
-            // 开抢时间
+            // 开抢时间：仅当引擎值真正变化时才回写，
+            // 否则校时循环每秒一次的同步会把用户正在编辑的文本冲掉
             var sat = e.StartAt?.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss") ?? "";
-            if (sat != "" && sat != StartAtText) StartAtText = sat;
+            if (sat != _lastStartAtPush)
+            {
+                _lastStartAtPush = sat;
+                if (StartAtText != sat) StartAtText = sat;
+            }
             // 课程
             RebuildCourses(e.Rows);
             // 状态

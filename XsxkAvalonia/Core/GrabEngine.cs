@@ -48,6 +48,9 @@ public class GrabEngine
     public List<(string Code, string Name)> ClassTypes = new();
     public List<JsonObject> Rows = new();
     public List<VolunteerItem> Volunteers = new();
+    // 每个轮次独立的志愿队列记忆（key=批次 code，空 key=未捕获批次时）
+    private readonly Dictionary<string, List<VolunteerItem>> _volQueues = new();
+    private string _volBatchKey = "";
     public double Offset;
     public int Online;
     public string NetText = "";
@@ -149,11 +152,27 @@ public class GrabEngine
 
     // ================= 头捕获（BrowserPump 回调） =================
 
+    /// <summary>切换批次：保存当前轮次的志愿队列，恢复目标轮次的队列（每轮次独立记忆）</summary>
+    private void SwitchBatchTo(string newWid)
+    {
+        if (string.IsNullOrEmpty(newWid) || newWid == Batch) return;
+        var had = Volunteers.Count;
+        if (had > 0 || _volQueues.ContainsKey(_volBatchKey))
+            _volQueues[_volBatchKey] = Volunteers.ToList();
+        Batch = newWid;
+        Volunteers = _volQueues.TryGetValue(newWid, out var q) ? q.ToList() : new List<VolunteerItem>();
+        _volBatchKey = newWid;
+        if (had > 0) Log($"💾 上一轮次的 {had} 门志愿已保存（切回该轮次自动恢复）");
+        if (Volunteers.Count > 0)
+            Log($"♻️ 已恢复本轮次志愿队列（{Volunteers.Count} 门；若开抢报错请移除后重新添加）");
+        NotifyState();
+    }
+
     public void OnHeaderCaptured(string key, string value)
     {
         if (string.IsNullOrEmpty(value)) return;
         if (key == "authorization" && value != Auth) { Auth = value; _authChanged = true; }
-        if (key == "batchid" && value != Batch) { Batch = value; _batchChanged = true; }
+        if (key == "batchid" && value != Batch) { SwitchBatchTo(value); _batchChanged = true; }
     }
 
     public void OnHeadersCaptured()
@@ -169,7 +188,10 @@ public class GrabEngine
             _batchChanged = false;
             var old = _navBatch;
             Log($"🔄 批次已自动更新: {Tail(Batch)}（原 {(string.IsNullOrEmpty(old) ? "空" : Tail(old))}）");
+            // 浏览器流量自带该批次，说明服务器会话已在该轮次（Python 版同款，省一次多余导航）
+            _navBatch = Batch;
             _ = FetchClassTypesAsync();
+            TryAutoRefreshBatch();
         }
         NotifyState();
         MaybeStartWs();
@@ -187,9 +209,24 @@ public class GrabEngine
 
     // ================= 轮次 =================
 
+    private bool _refreshScheduled;
+
     private void TryAutoRefreshBatch()
     {
-        if ((DateTime.Now - _lastBatchRefresh).TotalSeconds < 3) return;
+        if ((DateTime.Now - _lastBatchRefresh).TotalSeconds < 3)
+        {
+            // 节流期间不直接吞掉：延迟补刷一次（登录时 Authorization/batchid 常连发）
+            if (_refreshScheduled) return;
+            _refreshScheduled = true;
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(3200);
+                _refreshScheduled = false;
+                _lastBatchRefresh = DateTime.Now;
+                try { await RefreshBatchAsync(false); } catch { }
+            });
+            return;
+        }
         _lastBatchRefresh = DateTime.Now;
         _ = RefreshBatchAsync(false);
     }
@@ -197,6 +234,22 @@ public class GrabEngine
     public async Task RefreshBatchAsync(bool manual)
     {
         var client = new XsxkClient(this);
+        // 空批次时带 batchId 的请求一律被 302（Python 版同款处理）：
+        // 先导航默认选课页，让页面流量自动带出 batchid 头，捕获后会再次触发本流程
+        if (string.IsNullOrEmpty(Batch))
+        {
+            if (Browser.Alive)
+            {
+                try
+                {
+                    await client.NavAsync(null, 30, default);
+                    Log("已打开默认选课页，等待捕获当前轮次…");
+                }
+                catch (Exception e) { Log($"⚠️ 打开默认选课页失败: {e.Message}"); }
+            }
+            else if (manual) Log("尚未捕获批次：请先点「内置浏览器登录」。");
+            return;
+        }
         try
         {
             var text = await client.PostAsync("/elective/user", new Dictionary<string, string> { ["batchId"] = Batch });
@@ -234,7 +287,7 @@ public class GrabEngine
                 ? Logic.Pick(cb, "code", "WID", "wid", "batchId", "id") : "";
             if (!string.IsNullOrEmpty(curWid) && curWid != Batch)
             {
-                Batch = curWid;
+                SwitchBatchTo(curWid);
                 Log($"🔄 批次已自动更新: {Tail(curWid)}（原 {Tail(_navBatch)}）");
             }
             else if (Batches.Count > 0 && !Batches.Any(b => b.Wid == Batch))
@@ -250,7 +303,7 @@ public class GrabEngine
                                .OrderBy(b => TryParseTime(b.STime)!.Value.ToUnixTimeSeconds()).FirstOrDefault();
                 if (hit != null)
                 {
-                    var old = Batch; Batch = hit.Wid;
+                    var old = Batch; SwitchBatchTo(hit.Wid);
                     Log($"🔄 批次已自动更新: {Tail(hit.Wid)}（原 {(string.IsNullOrEmpty(old) ? "空" : Tail(old))}）");
                 }
             }
@@ -258,8 +311,9 @@ public class GrabEngine
             {
                 var cur = Batches.FirstOrDefault(b => b.Wid == Batch);
                 if (cur != null) Log($"当前轮次: {cur.Name}");
-                await FetchClassTypesAsync();
             }
+            // 类别缓存随批次变化失效（FetchClassTypesAsync 内部有节流，重复调用是安全的）
+            await FetchClassTypesAsync();
             NotifyState();
         }
         catch (Exception ex) { if (manual) Log($"⚠️ 获取轮次列表失败: {ex.Message}"); }
@@ -268,7 +322,7 @@ public class GrabEngine
     public async Task SelectBatchAsync(BatchInfo? b)
     {
         if (b == null || b.Wid == Batch) return;
-        Batch = b.Wid;
+        SwitchBatchTo(b.Wid);
         Log($"🎯 已选择轮次: {b}");
         if (!b.CanSelect)
             Log($"⚠️ 该轮次当前不可选: {(string.IsNullOrEmpty(b.NoSelectReason) ? "未到开始时间" : b.NoSelectReason)}");
@@ -314,6 +368,7 @@ public class GrabEngine
         }
         _ctBatch = Batch;
         ClassTypes = types;
+        Rows = new();   // 批次已变，旧轮次的课程列表作废
         Log("本批次课程类别: " + string.Join(" / ", ClassTypes.Select(t => $"{t.Name}({t.Code})")));
         // 与 Python 版 _load_types 一致：当前类别不在本批次列表中时自动切到第一个类别
         // （SelectClassType 内部会自动拉取课程列表，实现"切轮次→类别→课程"一条龙）
@@ -323,6 +378,8 @@ public class GrabEngine
             SelectClassType(ClassTypes[0].Code);
             return;
         }
+        // 类别没变但批次变了：也要重拉课程列表（旧轮次数据已失效）
+        if (!string.IsNullOrEmpty(Ctype)) _ = FetchCoursesAsync();
         NotifyState();
     }
 
