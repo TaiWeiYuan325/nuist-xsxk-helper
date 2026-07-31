@@ -13,7 +13,9 @@ public class BatchInfo
     public string Name = "";
     public string STime = "";
     public string ETime = "";
-    public override string ToString() => $"{Name}｜{STime} ~ {ETime}";
+    public bool CanSelect = true;
+    public string NoSelectReason = "";
+    public override string ToString() => $"{Name}｜{STime} ~ {ETime}" + (CanSelect ? "" : " ⚠️不可选");
 }
 
 public class VolunteerItem
@@ -207,14 +209,18 @@ public class GrabEngine
             foreach (var b in arr)
             {
                 if (b is not JsonObject o) continue;
-                var wid = Logic.Pick(o, "WID", "wid", "batchId", "id");
+                // 轮次 ID 字段是 code（与 Python 版一致）；兼容旧的 WID/wid/batchId/id
+                var wid = Logic.Pick(o, "code", "WID", "wid", "batchId", "id");
                 if (wid == "") continue;
+                var canSel = Logic.Pick(o, "canSelect") != "0";
                 list.Add(new BatchInfo
                 {
                     Wid = wid,
-                    Name = Logic.Pick(o, "batchName", "name", "batchDesc", "title"),
+                    Name = Logic.Pick(o, "name", "batchName", "batchDesc", "title"),
                     STime = Logic.FmtTime(Logic.Pick(o, "beginTime", "startTime", "sTime", "begin")),
                     ETime = Logic.FmtTime(Logic.Pick(o, "endTime", "eTime", "end")),
+                    CanSelect = canSel,
+                    NoSelectReason = Logic.Pick(o, "noSelectReason"),
                 });
             }
             if (list.Count == 0 && arr.Count > 0)
@@ -225,7 +231,7 @@ public class GrabEngine
             Batches = list;
             Log($"发现 {Batches.Count} 个选课轮次");
             var curWid = stu["currentElectiveBatch"] is JsonObject cb
-                ? Logic.Pick(cb, "WID", "wid", "batchId", "id") : "";
+                ? Logic.Pick(cb, "code", "WID", "wid", "batchId", "id") : "";
             if (!string.IsNullOrEmpty(curWid) && curWid != Batch)
             {
                 Batch = curWid;
@@ -264,6 +270,8 @@ public class GrabEngine
         if (b == null || b.Wid == Batch) return;
         Batch = b.Wid;
         Log($"🎯 已选择轮次: {b}");
+        if (!b.CanSelect)
+            Log($"⚠️ 该轮次当前不可选: {(string.IsNullOrEmpty(b.NoSelectReason) ? "未到开始时间" : b.NoSelectReason)}");
         var bt = TryParseTime(b.STime);
         if (bt.HasValue && bt.Value.ToUnixTimeSeconds() > Now())
         {
@@ -307,6 +315,14 @@ public class GrabEngine
         _ctBatch = Batch;
         ClassTypes = types;
         Log("本批次课程类别: " + string.Join(" / ", ClassTypes.Select(t => $"{t.Name}({t.Code})")));
+        // 与 Python 版 _load_types 一致：当前类别不在本批次列表中时自动切到第一个类别
+        // （SelectClassType 内部会自动拉取课程列表，实现"切轮次→类别→课程"一条龙）
+        if (!ClassTypes.Any(t => t.Code == Ctype))
+        {
+            Log($"ℹ️ 类别自动切换: {(string.IsNullOrEmpty(Ctype) ? "(未选择)" : Ctype)} → {ClassTypes[0].Code}");
+            SelectClassType(ClassTypes[0].Code);
+            return;
+        }
         NotifyState();
     }
 
