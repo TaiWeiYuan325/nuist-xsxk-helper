@@ -42,7 +42,7 @@ public class GrabEngine
     public string Batch = "";
     public string Ctype = "";
     public string Campus = "";
-    public int IntervalMs = 300;
+    public int IntervalMs = 400;
     public DateTimeOffset? StartAt;
     public bool Volmode;
     public List<BatchInfo> Batches = new();

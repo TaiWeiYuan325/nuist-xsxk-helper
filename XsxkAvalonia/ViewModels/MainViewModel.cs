@@ -64,7 +64,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private VolunteerRow? _selectedVolunteer;
     [ObservableProperty] private CourseRow? _selectedCourse;
     [ObservableProperty] private string _startAtText = "";
-    [ObservableProperty] private string _intervalText = "300";
+    [ObservableProperty] private string _intervalText = "400";
     [ObservableProperty] private string _batchTail = "批次 未捕获";
 
     // 状态区
@@ -93,7 +93,7 @@ public partial class MainViewModel : ObservableObject
     {
         Engine.Logged += m => Post(() => AddLog(m));
         Engine.StateChanged += () => Post(SyncFromEngine);
-        AddLog($"[{DateTime.Now:HH:mm:ss.fff}] 南信大选课助手 v3.0（纯HTTP会话版）已启动。");
+        AddLog($"[{DateTime.Now:HH:mm:ss.fff}] 南信大选课助手 v3.1 已启动。");
         Engine.LogCacheRestore();
         SyncFromEngine();
         // 有缓存 token 先校验有效期，没有/过期则直接拉验证码准备登录
@@ -234,7 +234,18 @@ public partial class MainViewModel : ObservableObject
         {
             var bytes = await Engine.FetchCaptchaAsync();
             var bmp = new Bitmap(new MemoryStream(bytes));
-            Post(() => { CaptchaImage = bmp; CaptchaText = ""; });
+            Post(() => { CaptchaImage = bmp; });
+            // OCR 自动识别，失败不阻断手动输入
+            try
+            {
+                var text = await Task.Run(() => CaptchaOcr.Recognize(bytes));
+                Post(() => CaptchaText = text);
+                AddLog($"[{DateTime.Now:HH:mm:ss.fff}] 🔤 验证码已自动识别: {text}（识别有误可手动改正）");
+            }
+            catch (Exception ocrEx)
+            {
+                AddLog($"[{DateTime.Now:HH:mm:ss.fff}] ⚠️ 验证码自动识别失败（{ocrEx.Message}），请手动输入。");
+            }
         }
         catch (Exception ex)
         {
@@ -249,16 +260,27 @@ public partial class MainViewModel : ObservableObject
         IsLoggingIn = true;
         try
         {
-            var ok = await Engine.LoginAsync(Username, Password, CaptchaText);
-            if (ok)
+            // OCR 识别可能有误差：失败后自动刷新验证码并重试，最多 3 轮
+            for (var attempt = 1; attempt <= 3; attempt++)
             {
-                Password = "";
-                CaptchaText = "";
-                LoginFormVisible = false;   // 登录成功自动折叠，把高度还给课程列表
-            }
-            else
-            {
-                await RefreshCaptchaAsync();   // 验证码一次性，失败后必须换新
+                var ok = await Engine.LoginAsync(Username, Password, CaptchaText);
+                if (ok)
+                {
+                    Password = "";
+                    CaptchaText = "";
+                    LoginFormVisible = false;   // 登录成功自动折叠，把高度还给课程列表
+                    return;
+                }
+                if (attempt < 3)
+                {
+                    AddLog($"[{DateTime.Now:HH:mm:ss.fff}] ⚠️ 第 {attempt} 次登录未成功，自动刷新验证码重试…");
+                    await RefreshCaptchaAsync();   // 验证码一次性，失败后必须换新（会自动 OCR）
+                }
+                else
+                {
+                    await RefreshCaptchaAsync();
+                    AddLog($"[{DateTime.Now:HH:mm:ss.fff}] ⚠️ 连续 3 次登录未成功，请检查学号密码或手动输入验证码。");
+                }
             }
         }
         finally { IsLoggingIn = false; }

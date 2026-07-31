@@ -47,3 +47,6 @@ XsxkWinUI/env-*.txt
 # ── 工具 ──
 ghcli/
 gh_auth.log
+shot_*.png
+_ocr_tmp/
+XsxkAvalonia/pub_out.txt

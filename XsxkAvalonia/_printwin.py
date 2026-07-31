@@ -12,7 +12,7 @@ try:
 except Exception:
     user32.SetProcessDPIAware()
 
-title = "南信大选课助手 v2.1"
+title = "南信大选课助手 v3.1"
 hwnd = user32.FindWindowW(None, title)
 if not hwnd:
     # 退而求其次：枚举找包含关键字的窗口
@@ -22,7 +22,7 @@ if not hwnd:
         if user32.IsWindowVisible(h):
             buf = ctypes.create_unicode_buffer(256)
             user32.GetWindowTextW(h, buf, 256)
-            if "南信大" in buf.value:
+            if "南信大选课助手" in buf.value and "Chrome" not in buf.value:
                 found.append((h, buf.value))
         return True
     user32.EnumWindows(enum_cb, 0)
