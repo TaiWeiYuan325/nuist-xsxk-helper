@@ -33,8 +33,9 @@ public class VolunteerItem
 public class GrabEngine
 {
     public string Base = "https://xsxk.nuist.edu.cn/xsxk";
-    public readonly BrowserPump Browser;
+    public readonly SessionClient Http;
     public readonly WsListener Ws;
+    public readonly CacheStore Cache = new();
 
     // ---- 状态 ----
     public string Auth = "";
@@ -56,7 +57,7 @@ public class GrabEngine
     public string NetText = "";
     public bool Grabbing { get; private set; }
     public bool WsConnected => Ws.Connected;
-    public bool BrowserOnline => Browser.Alive;
+    public bool LoggedIn => !string.IsNullOrEmpty(Auth);
 
     private CancellationTokenSource? _grabCts;
     private CancellationTokenSource? _netCts;
@@ -79,7 +80,7 @@ public class GrabEngine
 
     public GrabEngine()
     {
-        Browser = new BrowserPump(this);
+        Http = new SessionClient(this);
         Ws = new WsListener();
         Ws.Log += Log;
         Ws.StateChanged += () => StateChanged?.Invoke();
@@ -93,6 +94,29 @@ public class GrabEngine
             lock (this) { _wsAnySuccess = true; _wsSuccess = id; }
             try { _wsSignal.Release(); } catch { }
         };
+        Cache.Load();
+        Batches = Cache.LoadBatches();
+        Auth = Cache.LoadAuth();
+        StartNetLoop();
+    }
+
+    /// <summary>UI 事件接线完成后调用，报告缓存恢复情况（构造时日志无人订阅会丢）</summary>
+    public void LogCacheRestore()
+    {
+        if (Batches.Count > 0)
+            Log($"📦 已从本地缓存恢复 {Batches.Count} 个轮次（切轮次先显缓存，后台自动同步）");
+        if (string.IsNullOrEmpty(Auth)) return;
+        var sid = Logic.StudentIdFromJwt(Auth);
+        var exp = JwtExp(Auth);
+        if (exp == 0)
+        {
+            Log($"🔑 已从缓存恢复登录凭据（学号 {sid}，有效期未知，开抢前可用「检查 token」验证）");
+            return;
+        }
+        var remain = exp - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        Log(remain > 0
+            ? $"🔑 已从缓存恢复登录凭据（学号 {sid}，约 {remain / 3600} 小时 {remain % 3600 / 60} 分后到期）"
+            : $"⚠️ 缓存的登录凭据已过期（学号 {sid}），请重新登录");
     }
 
     public void Log(string m) => Logged?.Invoke($"[{DateTime.Now:HH:mm:ss.fff}] {m}");
@@ -127,30 +151,68 @@ public class GrabEngine
         catch { return 0; }
     }
 
-    // ================= 浏览器 =================
+    // ================= 登录（纯 HTTP，无需浏览器） =================
 
-    public async Task OpenBrowserAsync()
+    private string _captchaUuid = "";
+
+    /// <summary>拉取验证码图片（uuid 存在引擎里，登录时配对使用）</summary>
+    public async Task<byte[]> FetchCaptchaAsync()
     {
-        await Browser.StartAsync();
-        if (Browser.Alive) StartNetLoop();
-        MaybeStartWs();
-        NotifyState();
+        var (img, uuid) = await Http.GetCaptchaAsync(10, default);
+        _captchaUuid = uuid;
+        return img;
+    }
+
+    /// <summary>学号/密码/验证码登录。成功：拿 token、缓存、拉轮次；失败：返回 false（调用方负责刷新验证码）</summary>
+    public async Task<bool> LoginAsync(string username, string password, string captcha)
+    {
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+        { Log("⚠️ 请输入学号和密码"); return false; }
+        if (string.IsNullOrEmpty(_captchaUuid)) { Log("⚠️ 请先获取验证码"); return false; }
+        if (string.IsNullOrWhiteSpace(captcha)) { Log("⚠️ 请输入图片中的验证码"); return false; }
+        try
+        {
+            var data = await Http.LoginAsync(username.Trim(), password, captcha.Trim(), _captchaUuid, 12, default);
+            var token = data["token"]?.ToString() ?? "";
+            if (token == "")
+            {
+                var sample = data.ToJsonString();
+                Log($"⚠️ 登录响应缺少 token（样本发给作者）: {sample[..Math.Min(200, sample.Length)]}");
+                return false;
+            }
+            Auth = token;
+            Cache.SaveAuth(token);
+            var name = data["student"]?["XM"]?.ToString();
+            Log(string.IsNullOrEmpty(name)
+                ? $"🎉 登录成功（学号 {Logic.StudentIdFromJwt(token)}）"
+                : $"🎉 登录成功！欢迎你，{name} 同学");
+            NotifyState();
+            MaybeStartWs();
+            // airline233：登录后服务端轮次状态重置，需要重新引导 + 拉取轮次
+            await RefreshBatchAsync(true);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log($"❌ 登录失败: {ex.Message}");
+            return false;
+        }
     }
 
     public void CheckToken()
     {
-        if (string.IsNullOrEmpty(Auth)) { Log("尚未捕获到 Authorization，请先点「打开内置浏览器」登录。"); return; }
+        if (string.IsNullOrEmpty(Auth)) { Log("尚未登录，请在左侧输入学号密码登录。"); return; }
         var sid = Logic.StudentIdFromJwt(Auth);
         var exp = JwtExp(Auth);
-        if (exp == 0) { Log($"token 未包含过期时间（学号 {sid}），抓到新的会自动覆盖。"); return; }
+        if (exp == 0) { Log($"token 未包含过期时间（学号 {sid}）。"); return; }
         var remain = exp - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         if (remain > 0)
             Log($"token 有效（学号 {sid}），约 {remain / 3600} 小时 {remain % 3600 / 60} 分后到期。");
         else
-            Log($"⚠️ token 已过期 {(-remain) / 60} 分钟（学号 {sid}）！请在内置浏览器里刷新选课页面重新捕获，否则开抢必败。");
+            Log($"⚠️ token 已过期 {(-remain) / 60} 分钟（学号 {sid}）！请重新登录，否则开抢必败。");
     }
 
-    // ================= 头捕获（BrowserPump 回调） =================
+    // ================= 轮次 =================
 
     /// <summary>切换批次：保存当前轮次的志愿队列，恢复目标轮次的队列（每轮次独立记忆）</summary>
     private void SwitchBatchTo(string newWid)
@@ -168,91 +230,35 @@ public class GrabEngine
         NotifyState();
     }
 
-    public void OnHeaderCaptured(string key, string value)
-    {
-        if (string.IsNullOrEmpty(value)) return;
-        if (key == "authorization" && value != Auth) { Auth = value; _authChanged = true; }
-        if (key == "batchid" && value != Batch) { SwitchBatchTo(value); _batchChanged = true; }
-    }
-
-    public void OnHeadersCaptured()
-    {
-        if (_authChanged)
-        {
-            _authChanged = false;
-            Log("🔑 已自动捕获: Authorization");
-            TryAutoRefreshBatch();
-        }
-        if (_batchChanged)
-        {
-            _batchChanged = false;
-            var old = _navBatch;
-            Log($"🔄 批次已自动更新: {Tail(Batch)}（原 {(string.IsNullOrEmpty(old) ? "空" : Tail(old))}）");
-            // 浏览器流量自带该批次，说明服务器会话已在该轮次（Python 版同款，省一次多余导航）
-            _navBatch = Batch;
-            _ = FetchClassTypesAsync();
-            TryAutoRefreshBatch();
-        }
-        NotifyState();
-        MaybeStartWs();
-    }
-
-    public void OnRowsCaptured(List<JsonObject> rows, string ctype)
-    {
-        if (Rows.Count == 0 && rows.Count > 0 && (string.IsNullOrEmpty(Ctype) || ctype == Ctype))
-        {
-            Rows = rows;
-            Log($"📡 已从浏览器流量捕获课程列表（{rows.Count} 行）");
-            NotifyState();
-        }
-    }
-
-    // ================= 轮次 =================
-
-    private bool _refreshScheduled;
-
-    private void TryAutoRefreshBatch()
-    {
-        if ((DateTime.Now - _lastBatchRefresh).TotalSeconds < 3)
-        {
-            // 节流期间不直接吞掉：延迟补刷一次（登录时 Authorization/batchid 常连发）
-            if (_refreshScheduled) return;
-            _refreshScheduled = true;
-            _ = Task.Run(async () =>
-            {
-                await Task.Delay(3200);
-                _refreshScheduled = false;
-                _lastBatchRefresh = DateTime.Now;
-                try { await RefreshBatchAsync(false); } catch { }
-            });
-            return;
-        }
-        _lastBatchRefresh = DateTime.Now;
-        _ = RefreshBatchAsync(false);
-    }
-
     public async Task RefreshBatchAsync(bool manual)
     {
-        var client = new XsxkClient(this);
-        // 空批次时带 batchId 的请求一律被 302（Python 版同款处理）：
-        // 先导航默认选课页，让页面流量自动带出 batchid 头，捕获后会再次触发本流程
+        if (string.IsNullOrEmpty(Auth)) { if (manual) Log("尚未登录，请先登录。"); return; }
+        // 空批次：先 GET 个人主页解析 var batch.code 引导当前批次（airline233 同款：
+        // "平台系统bug，需要先访问首页才能正常获取用户信息"），再重放切换确立会话
         if (string.IsNullOrEmpty(Batch))
         {
-            if (Browser.Alive)
+            try
             {
-                try
+                var html = await Http.GetPageAsync("/profile/index.html", null, 15, default);
+                var seed = Logic.ParseProfileBatchId(html);
+                if (!string.IsNullOrEmpty(seed))
                 {
-                    await client.NavAsync(null, 30, default);
-                    Log("已打开默认选课页，等待捕获当前轮次…");
+                    SwitchBatchTo(seed);
+                    _navBatch = seed;
+                    Log($"🌱 已从个人主页引导批次: {Tail(seed)}");
                 }
-                catch (Exception e) { Log($"⚠️ 打开默认选课页失败: {e.Message}"); }
             }
-            else if (manual) Log("尚未捕获批次：请先点「内置浏览器登录」。");
-            return;
+            catch (Exception e) { Log($"⚠️ 批次引导失败: {e.Message}"); }
+            if (string.IsNullOrEmpty(Batch))
+            {
+                if (manual) Log("尚未捕获批次：个人主页未返回批次信息。");
+                return;
+            }
         }
         try
         {
-            var text = await client.PostAsync("/elective/user", new Dictionary<string, string> { ["batchId"] = Batch });
+            // 拉轮次列表（头不带 batchid，与 airline233 get_user_info 一致，避免头/会话不一致被拒）
+            var text = await Http.PostAsync("/elective/user", new Dictionary<string, string> { ["batchId"] = Batch }, 15, default, withBatch: false);
             var jo = Logic.ParseJsonText(text);
             var stu = jo["data"]?["student"] as JsonObject;
             if (stu == null) { if (manual) Log("未获取到学生信息（未登录或登录已过期）。"); return; }
@@ -282,6 +288,7 @@ public class GrabEngine
                 Log($"⚠️ 轮次响应 {arr.Count} 项但无一识别（首项样本，发给作者）: {sample[..Math.Min(300, sample.Length)]}");
             }
             Batches = list;
+            Cache.SaveBatches(list);
             Log($"发现 {Batches.Count} 个选课轮次");
             var curWid = stu["currentElectiveBatch"] is JsonObject cb
                 ? Logic.Pick(cb, "code", "WID", "wid", "batchId", "id") : "";
@@ -332,30 +339,46 @@ public class GrabEngine
             StartAt = bt.Value;
             Log("已自动填入开抢时间 = 轮次开始时间");
         }
-        await FetchClassTypesAsync();
+        // 先显示本地缓存（轮次未开始/页面拉不动时照样能看课排志愿），再后台同步真实数据
+        var cachedTypes = Cache.LoadClassTypes(b.Wid);
+        if (cachedTypes.Count > 0)
+        {
+            ClassTypes = cachedTypes;
+            _ctBatch = b.Wid;
+            if (!ClassTypes.Any(t => t.Code == Ctype))
+            {
+                Ctype = ClassTypes[0].Code;
+                Volmode = Ctype == "XGKC";
+            }
+            Rows = Cache.LoadCourses(b.Wid, Ctype);
+            Log($"📦 已从本地缓存载入「{b.Name}」: {ClassTypes.Count} 个类别 / {Rows.Count} 门课程");
+            NotifyState();
+        }
+        await FetchClassTypesAsync(force: true);
         NotifyState();
     }
 
     // ================= 类别 =================
 
-    public async Task FetchClassTypesAsync()
+    public async Task FetchClassTypesAsync(bool force = false)
     {
         if (string.IsNullOrEmpty(Batch)) return;
-        if (_ctBatch == Batch && ClassTypes.Count > 0) return;
-        var client = new XsxkClient(this);
+        if (!force && _ctBatch == Batch && ClassTypes.Count > 0) return;
         string html = "";
         try
         {
-            if (Browser.Alive && Batch != _navBatch)
+            if (Batch != _navBatch)
             {
-                html = await client.NavAsync(new Dictionary<string, string> { ["batchId"] = Batch }, 25, default);
+                // 先 POST 切轮次（airline233 同款，轻量），再取 grablessons 页解析类别
+                await Http.SwitchBatchAsync(Batch, 10, default);
+                html = await Http.NavAsync(new Dictionary<string, string> { ["batchId"] = Batch }, 25, default);
                 _navBatch = Batch;
-                Log($"🔀 服务器轮次已切换（页面导航）: {Tail(Batch)}");
+                Log($"🔀 服务器轮次已切换: {Tail(Batch)}");
             }
             else
             {
-                html = await client.GetAsync("/elective/grablessons",
-                    new Dictionary<string, string> { ["batchId"] = Batch });
+                html = await Http.GetPageAsync("/elective/grablessons",
+                    new Dictionary<string, string> { ["batchId"] = Batch }, 25, default);
             }
         }
         catch (Exception ex) { Log($"⚠️ 切换服务器轮次异常: {ex.Message}"); return; }
@@ -363,11 +386,17 @@ public class GrabEngine
         if (types.Count == 0) types = Logic.ParseClassTypesLoose(html);
         if (types.Count == 0)
         {
-            Log($"⚠️ 类别解析失败（页面 {html.Length} 字符）");
+            var title = Logic.HtmlTitle(html);
+            var hint = ClassTypes.Count > 0 ? "，已保留本地缓存显示" : "";
+            var reason = title == "学生选课"
+                ? "服务器未提供该轮次选课页（轮次未开始，或登录态已过期需重新登录）"
+                : "该轮次可能未开始，服务器不提供选课页";
+            Log($"⚠️ 类别解析失败（页面 {html.Length} 字符{(title != "" ? $"，标题「{title}」" : "")}）{hint}——{reason}");
             return;
         }
         _ctBatch = Batch;
         ClassTypes = types;
+        Cache.SaveClassTypes(Batch, types);
         Rows = new();   // 批次已变，旧轮次的课程列表作废
         Log("本批次课程类别: " + string.Join(" / ", ClassTypes.Select(t => $"{t.Name}({t.Code})")));
         // 与 Python 版 _load_types 一致：当前类别不在本批次列表中时自动切到第一个类别
@@ -402,7 +431,6 @@ public class GrabEngine
     {
         if (string.IsNullOrEmpty(Ctype)) { Log("请先选择类别。"); return; }
         Log($"拉取课程列表（{Ctype}）…");
-        var client = new XsxkClient(this);
         try
         {
             var body = new JsonObject
@@ -414,13 +442,14 @@ public class GrabEngine
                 ["campus"] = Campus,
             };
             if (Ctype != "ALLKC") body["SFYX"] = "2";
-            var text = await client.PostJsonAsync("/elective/nuist/clazz/list", body);
+            var text = await Http.PostJsonAsync("/elective/nuist/clazz/list", body);
             var jo = Logic.ParseJsonText(text);
             var dict = new Dictionary<string, JsonObject>();
             Logic.WalkRows(jo, dict);
             if (dict.Count > 0)
             {
                 Rows = dict.Values.ToList();
+                Cache.SaveCourses(Batch, Ctype, Rows);
                 Log($"获取到 {Rows.Count} 门课程");
             }
             else
@@ -480,18 +509,16 @@ public class GrabEngine
 
     public void MaybeStartWs()
     {
-        var should = Browser.Alive && !string.IsNullOrEmpty(Auth) && (Grabbing || Volunteers.Count > 0);
+        // 会话 Cookie 罐 + Authorization 直接握手（airline233：登录后同会话连校方 WS）
+        var should = !string.IsNullOrEmpty(Auth) && (Grabbing || Volunteers.Count > 0);
         if (!should || Ws.Connected || Ws.Running) return;
         var sid = Logic.StudentIdFromJwt(Auth);
         if (string.IsNullOrEmpty(sid)) return;
         var url = $"wss://xsxk.nuist.edu.cn/xsxk/websocket/{sid}";
+        var cookie = Http.CookieHeader();
         _ = Task.Run(async () =>
         {
-            try
-            {
-                var cookies = await Browser.CookiesAsync();
-                await Ws.StartAsync(url, cookies);
-            }
+            try { await Ws.StartAsync(url, cookie); }
             catch { }
         });
     }
@@ -534,8 +561,7 @@ public class GrabEngine
                 try
                 {
                     var t0 = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0;
-                    var client = new XsxkClient(this);
-                    var text = await client.PostAsync("/web/now", new Dictionary<string, string>(), 10, ct);
+                    var text = await Http.PostAsync("/web/now", new Dictionary<string, string>(), 10, ct, withBatch: false);
                     var jo = Logic.ParseJsonText(text);
                     var cur = jo["data"]?["currentTime"];
                     var online = jo["data"]?["onlineCount"];
@@ -562,12 +588,12 @@ public class GrabEngine
     {
         if (Grabbing) return;
         if (Volunteers.Count == 0) { Log("⚠️ 志愿队列为空，请先在课程列表中双击课程加入志愿。"); return; }
-        if (string.IsNullOrEmpty(Auth)) { Log("⚠️ 尚未捕获 Authorization，请先打开内置浏览器登录。"); return; }
+        if (string.IsNullOrEmpty(Auth)) { Log("⚠️ 尚未登录，请先在左侧登录。"); return; }
         if (string.IsNullOrEmpty(Batch)) { Log("⚠️ 尚未捕获 batchId，请先刷新轮次。"); return; }
         var exp = JwtExp(Auth);
         if (exp > 0 && DateTimeOffset.UtcNow.ToUnixTimeSeconds() > exp - 120)
         {
-            Log("⚠️ token 已过期或即将过期，请在内置浏览器里刷新选课页面重新捕获后再开抢！");
+            Log("⚠️ token 已过期或即将过期，请重新登录后再开抢！");
             return;
         }
         lock (this) { _wsFull = ""; _wsSuccess = ""; _wsAnySuccess = false; }
@@ -610,12 +636,32 @@ public class GrabEngine
             }
         }
         if (ct.IsCancellationRequested) return;
+        var client = Http;
+        // 开抢窗口内先把服务器会话切到目标轮次（airline233：POST /elective/user，
+        // 头不带 batchid）。轮次刚开始的几秒内服务器可能还没放行，重试数次；
+        // 失败也继续投递（add 请求自带 batchId）
+        for (var i = 0; !ct.IsCancellationRequested; i++)
+        {
+            if (await client.SwitchBatchAsync(Batch, 10, ct))
+            {
+                _navBatch = Batch;
+                Log($"🔀 服务器轮次已确认: {Tail(Batch)}");
+                break;
+            }
+            if (ct.IsCancellationRequested) return;
+            if (i == 0) Log("⏳ 正在切换服务器轮次…");
+            if (i >= 9)
+            {
+                Log("⚠️ 轮次切换未获服务器确认，仍继续投递（add 请求自带 batchId）");
+                break;
+            }
+            await DelayMs(800, ct);
+        }
         // 开抢前刷新一次课程列表
         try { await FetchCoursesAsync(); } catch { }
         if (Rows.Count == 0)
             Log("⚠️ 未能获取课程列表，仍按志愿队列中的 secretVal 直接投递。");
         if (ct.IsCancellationRequested) return;
-        var client = new XsxkClient(this);
         if (Volmode) await VolunteerLoopAsync(client, ct);
         else await NormalLoopAsync(client, ct);
         if (!ct.IsCancellationRequested)
@@ -632,7 +678,7 @@ public class GrabEngine
     }
 
     /// <summary>普通模式：投递一门课并等待 WS 裁决（最多 8 秒）。</summary>
-    private async Task<string> EnqueueAndWaitAsync(XsxkClient client, VolunteerItem v, CancellationToken ct)
+    private async Task<string> EnqueueAndWaitAsync(SessionClient client, VolunteerItem v, CancellationToken ct)
     {
         var body = new Dictionary<string, string>
         {
@@ -669,13 +715,13 @@ public class GrabEngine
         }
         if (code == "full") Log($"🈵 「{v.Name}」已满（{msg}），切换下一志愿");
         else if (code == "impossible") Log($"⛔ 「{v.Name}」{msg}，切换下一志愿");
-        else if (code == "auth") Log("🔒 登录态已失效，请在内置浏览器里刷新选课页面！抢课已暂停。");
-        else if (code == "badHtml") Log("🔒 会话异常（服务器返回HTML），请在内置浏览器里刷新选课页面！");
+        else if (code == "auth") Log("🔒 登录态已失效，请重新登录！抢课已暂停。");
+        else if (code == "badHtml") Log("🔒 会话异常（服务器返回HTML），请重新登录！");
         else Log($"⛔ 「{v.Name}」{msg}");
         return code;
     }
 
-    private async Task NormalLoopAsync(XsxkClient client, CancellationToken ct)
+    private async Task NormalLoopAsync(SessionClient client, CancellationToken ct)
     {
         Log("🏁 开抢！（普通模式：成功即停）");
         var idx = 0;
@@ -723,7 +769,7 @@ public class GrabEngine
         }
     }
 
-    private async Task VolunteerLoopAsync(XsxkClient client, CancellationToken ct)
+    private async Task VolunteerLoopAsync(SessionClient client, CancellationToken ct)
     {
         Log("🏁 开抢！（志愿模式：按志愿顺序提交，成功一门继续下一门）");
         var notOpenSince = new Dictionary<string, double>();

@@ -29,9 +29,13 @@ nohup.out
 
 # ── 参考仓库/测试数据/调试产物 ──
 ref-xsxk-nuist/
+ref-airline233/
 ref_common.py
 ref_course.py
 test_session.json
+XsxkAvalonia/build_out.txt
+XsxkAvalonia/shot_*.png
+xsxk_cache.json
 XsxkWinUI/XcWrap.cmd*
 XsxkWinUI/checkxaml*.cmd
 XsxkWinUI/dumpenv.cmd

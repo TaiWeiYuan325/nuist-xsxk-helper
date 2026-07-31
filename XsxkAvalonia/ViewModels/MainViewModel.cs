@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -62,12 +65,11 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private CourseRow? _selectedCourse;
     [ObservableProperty] private string _startAtText = "";
     [ObservableProperty] private string _intervalText = "300";
-    [ObservableProperty] private bool _debugCapture;
     [ObservableProperty] private string _batchTail = "批次 未捕获";
 
     // 状态区
-    [ObservableProperty] private string _browserStatus = "未打开";
-    [ObservableProperty] private IBrush _browserBrush = Brushes.Gray;
+    [ObservableProperty] private string _loginStatus = "未登录";
+    [ObservableProperty] private IBrush _loginBrush = Brushes.Gray;
     [ObservableProperty] private string _tokenStatus = "未捕获";
     [ObservableProperty] private IBrush _tokenBrush = Brushes.Gray;
     [ObservableProperty] private string _wsStatus = "未连接";
@@ -79,11 +81,25 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool _isGrabbing;
     [ObservableProperty] private string _courseCountText = "0 门课程";
 
+    // 登录表单
+    [ObservableProperty] private string _username = "";
+    [ObservableProperty] private string _password = "";
+    [ObservableProperty] private string _captchaText = "";
+    [ObservableProperty] private Bitmap? _captchaImage;
+    [ObservableProperty] private bool _isLoggingIn;
+    [ObservableProperty] private bool _loginFormVisible = true;
+
     public MainViewModel()
     {
         Engine.Logged += m => Post(() => AddLog(m));
         Engine.StateChanged += () => Post(SyncFromEngine);
-        AddLog($"[{DateTime.Now:HH:mm:ss.fff}] 南信大选课助手（Avalonia 版）已启动，点「打开内置浏览器」登录选课系统。");
+        AddLog($"[{DateTime.Now:HH:mm:ss.fff}] 南信大选课助手 v3.0（纯HTTP会话版）已启动。");
+        Engine.LogCacheRestore();
+        SyncFromEngine();
+        // 有缓存 token 先校验有效期，没有/过期则直接拉验证码准备登录
+        var cached = !string.IsNullOrEmpty(Engine.Auth);
+        if (cached) Engine.CheckToken();
+        _ = RefreshCaptchaAsync();
     }
 
     private static void Post(Action a) => Dispatcher.UIThread.Post(a);
@@ -147,8 +163,8 @@ public partial class MainViewModel : ObservableObject
             // 课程
             RebuildCourses(e.Rows);
             // 状态
-            BrowserStatus = e.BrowserOnline ? "已打开" : "未打开";
-            BrowserBrush = e.BrowserOnline ? Brushes.ForestGreen : Brushes.Gray;
+            LoginStatus = e.LoggedIn ? $"已登录（{Logic.StudentIdFromJwt(e.Auth)}）" : "未登录";
+            LoginBrush = e.LoggedIn ? Brushes.ForestGreen : Brushes.Gray;
             TokenStatus = string.IsNullOrEmpty(e.Auth) ? "未捕获" : "已捕获";
             TokenBrush = string.IsNullOrEmpty(e.Auth) ? Brushes.Gray : Brushes.ForestGreen;
             WsStatus = e.WsConnected ? "已连接" : "未连接";
@@ -158,7 +174,6 @@ public partial class MainViewModel : ObservableObject
             StartButtonText = e.Grabbing ? "停止抢课" : "开始抢课";
             IsGrabbing = e.Grabbing;
             if (!string.IsNullOrEmpty(e.NetText)) NetText = e.NetText;
-            DebugCapture = e.Browser.DebugCapture;
         }
         finally { _syncing = false; }
     }
@@ -198,8 +213,6 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnSearchTextChanged(string value) => ApplyFilter();
 
-    partial void OnDebugCaptureChanged(bool value) => Engine.Browser.DebugCapture = value;
-
     partial void OnSelectedBatchChanged(BatchInfo? value)
     {
         if (_syncing || value == null) return;
@@ -215,7 +228,48 @@ public partial class MainViewModel : ObservableObject
     // ================= 命令 =================
 
     [RelayCommand]
-    private void OpenBrowser() => _ = Engine.OpenBrowserAsync();
+    private async Task RefreshCaptchaAsync()
+    {
+        try
+        {
+            var bytes = await Engine.FetchCaptchaAsync();
+            var bmp = new Bitmap(new MemoryStream(bytes));
+            Post(() => { CaptchaImage = bmp; CaptchaText = ""; });
+        }
+        catch (Exception ex)
+        {
+            AddLog($"[{DateTime.Now:HH:mm:ss.fff}] ⚠️ 获取验证码失败: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task LoginAsync()
+    {
+        if (IsLoggingIn) return;
+        IsLoggingIn = true;
+        try
+        {
+            var ok = await Engine.LoginAsync(Username, Password, CaptchaText);
+            if (ok)
+            {
+                Password = "";
+                CaptchaText = "";
+                LoginFormVisible = false;   // 登录成功自动折叠，把高度还给课程列表
+            }
+            else
+            {
+                await RefreshCaptchaAsync();   // 验证码一次性，失败后必须换新
+            }
+        }
+        finally { IsLoggingIn = false; }
+    }
+
+    [RelayCommand]
+    private async Task ExpandLoginAsync()
+    {
+        LoginFormVisible = true;
+        await RefreshCaptchaAsync();   // 重新登录一律换新验证码
+    }
 
     [RelayCommand]
     private void RefreshBatch() => _ = Engine.RefreshBatchAsync(true);

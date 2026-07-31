@@ -18,6 +18,5 @@
     <PackageReference Include="Avalonia.Fonts.Inter" Version="12.*" />
     <PackageReference Include="Material.Avalonia" Version="3.*" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.*" />
-    <PackageReference Include="Microsoft.Playwright" Version="1.*" />
   </ItemGroup>
 </Project>

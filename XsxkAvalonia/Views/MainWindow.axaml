@@ -4,7 +4,7 @@
         xmlns:material="clr-namespace:Material.Styles.Controls;assembly=Material.Styles"
         x:Class="XsxkAvalonia.Views.MainWindow"
         x:DataType="vm:MainViewModel"
-        Title="南信大选课助手 v2.2"
+        Title="南信大选课助手 v3.0"
         Width="1360" Height="920" MinWidth="1160" MinHeight="720"
         WindowStartupLocation="CenterScreen"
         Background="#F4F4F2"
@@ -21,7 +21,7 @@
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10"
                             Margin="14,0,0,0" VerticalAlignment="Center">
                     <TextBlock Text="南信大选课助手" FontSize="14" FontWeight="Black"/>
-                    <TextBlock Text="// NUIST XSXK HELPER v2.2" FontSize="10" Opacity="0.45"
+                    <TextBlock Text="// NUIST XSXK HELPER v3.0" FontSize="10" Opacity="0.45"
                                FontFamily="Consolas" FontWeight="Bold"
                                VerticalAlignment="Bottom" Margin="2,0,0,1"/>
                 </StackPanel>
@@ -89,9 +89,9 @@
                         </StackPanel>
                         <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding BrowserBrush}"/>
-                                <TextBlock Text="内置浏览器" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                                <TextBlock Text="{Binding BrowserStatus}" VerticalAlignment="Center" Opacity="0.7"/>
+                                <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding LoginBrush}"/>
+                                <TextBlock Text="登录状态" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding LoginStatus}" VerticalAlignment="Center" Opacity="0.7"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding TokenBrush}"/>
@@ -136,20 +136,39 @@
                                 </Border>
                                 <Border Height="3" Background="#212121" Margin="0,2,0,0"/>
                             </StackPanel>
-                            <Button Command="{Binding OpenBrowserCommand}"
-                                    Classes="ef-primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
+                            <StackPanel Spacing="8" IsVisible="{Binding LoginFormVisible}">
+                                <TextBox Text="{Binding Username}" Watermark="学号"/>
+                                <TextBox Text="{Binding Password}" Watermark="密码" PasswordChar="●"/>
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                    <Border Grid.Column="0" BorderBrush="#212121" BorderThickness="2"
+                                            VerticalAlignment="Center" Background="#FFFFFF">
+                                        <Image Source="{Binding CaptchaImage}" Width="96" Height="36"/>
+                                    </Border>
+                                    <TextBox Grid.Column="1" Text="{Binding CaptchaText}" Watermark="验证码"
+                                             FontFamily="Consolas" VerticalContentAlignment="Center"/>
+                                    <Button Grid.Column="2" Command="{Binding RefreshCaptchaCommand}"
+                                            Classes="ef" Padding="10,0" VerticalAlignment="Stretch">
+                                        <Path Data="{StaticResource IcRefresh}" Classes="ef-ic" Width="15" Height="15"
+                                              Stroke="{Binding $parent[Button].Foreground}"/>
+                                    </Button>
+                                </Grid>
+                                <Button Command="{Binding LoginCommand}"
+                                        Classes="ef-primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
+                                    <TextBlock Text="登录选课系统" FontWeight="Black"/>
+                                </Button>
+                                <TextBlock Text="密码只存内存不落盘；token 会缓存，重启免登录。全部请求走软件内置会话，无需浏览器。"
+                                           FontSize="11" Opacity="0.6" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <!-- 登录成功后折叠为单行，不占课程列表高度 -->
+                            <Button Classes="ef" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                    Command="{Binding ExpandLoginCommand}"
+                                    IsVisible="{Binding !LoginFormVisible}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <Path Data="{StaticResource IcGlobe}" Classes="ef-ic" Width="16" Height="16"
+                                    <Path Data="{StaticResource IcRefresh}" Classes="ef-ic" Width="14" Height="14"
                                           Stroke="{Binding $parent[Button].Foreground}"/>
-                                    <TextBlock Text="内置浏览器登录" FontWeight="Black"/>
+                                    <TextBlock Text="已登录，点这里重新登录" FontWeight="SemiBold"/>
                                 </StackPanel>
                             </Button>
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <Path Data="{StaticResource IcWarn}" Classes="ef-ic" Width="15" Height="15"
-                                      Stroke="#B45309" VerticalAlignment="Top" Margin="0,1,0,0"/>
-                                <TextBlock Text="抢课期间请勿关闭内置浏览器，所有请求都经过它"
-                                           Foreground="#B45309" FontSize="12" TextWrapping="Wrap" FontWeight="SemiBold"/>
-                            </StackPanel>
                             <Button Command="{Binding RefreshBatchCommand}"
                                     Classes="ef" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
@@ -169,8 +188,6 @@
                             </ToggleButton>
                             <StackPanel IsVisible="{Binding IsChecked, ElementName=AdvToggle}"
                                         Spacing="8" Margin="0,0,0,0">
-                                <CheckBox Content="记录浏览器请求（排障用，日志会刷屏）"
-                                          IsChecked="{Binding DebugCapture}"/>
                                 <Button Command="{Binding CheckTokenCommand}"
                                         Classes="ef" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
                                     <TextBlock Text="检查 token 有效期" FontWeight="SemiBold"/>

@@ -228,6 +228,45 @@ public static partial class Logic
         return output;
     }
 
+    /// <summary>从 grablessons 页面解析 grablessonsVue.lcParam.currentBatch.code（验证会话轮次用），失败返回 ""。</summary>
+    public static string PageBatchCode(string html)
+    {
+        const string marker = "grablessonsVue.lcParam.currentBatch";
+        var i = (html ?? "").IndexOf(marker, StringComparison.Ordinal);
+        if (i < 0) return "";
+        var j = html!.IndexOf('{', i + marker.Length);
+        if (j < 0) return "";
+        try
+        {
+            return (JsonNode.Parse(ExtractJsonObject(html, j)) as JsonObject)?["code"]?.ToString() ?? "";
+        }
+        catch { return ""; }
+    }
+
+    /// <summary>提取 HTML 页面标题（诊断用），无标题返回 ""。</summary>
+    public static string HtmlTitle(string html)
+    {
+        var m = Regex.Match(html ?? "", @"<title>(.*?)</title>", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        return m.Success ? m.Groups[1].Value.Trim() : "";
+    }
+
+    /// <summary>从个人主页 /profile/index.html 的 var batch = {...} 中解析当前批次 code。
+    /// 无浏览器时用它引导出批次 ID（YoungUsing 的 login_with_token 同款做法），失败返回 ""。</summary>
+    public static string ParseProfileBatchId(string html)
+    {
+        if (string.IsNullOrEmpty(html)) return "";
+        var m = Regex.Match(html, @"var\s+batch\s*=");
+        if (!m.Success) return "";
+        var j = html.IndexOf('{', m.Index + m.Length);
+        if (j < 0) return "";
+        try
+        {
+            var node = JsonNode.Parse(ExtractJsonObject(html, j)) as JsonObject;
+            return node?["code"]?.ToString() ?? "";
+        }
+        catch { return ""; }
+    }
+
     /// <summary>从 html[pos]（应为'{'）起提取平衡括号 JSON 子串</summary>
     private static string ExtractJsonObject(string s, int pos)
     {
