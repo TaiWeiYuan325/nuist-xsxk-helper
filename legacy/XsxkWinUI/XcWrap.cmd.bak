@@ -1,0 +1,17 @@
+@echo off
+rem XamlCompiler.exe 会被 MSBuild 泄露的 Platform=x64 环境变量干扰（WMC9999 抖动），
+rem 本包装器清理干扰变量、固定工作目录、重定向 stdio 并重试。
+setlocal
+set "Platform="
+set "MSBuildExtensionsPath="
+set "MSBuildExtensionsPath32="
+set "MSBuildExtensionsPath64="
+echo [%TIME%] run args=[%~1] >> "%~dp0xcwrap-trace.log"
+cd /d "%~dp0"
+set N=0
+:retry
+"C:\Users\Tai_Wei_Yuan\.nuget\packages\microsoft.windowsappsdk\1.6.250108002\tools\net472\XamlCompiler.exe" "%~1" "%~2" > "%~dp0xamlcompiler-last.log" 2>&1
+if %ERRORLEVEL%==0 exit /b 0
+set /a N+=1
+if %N% LSS 4 goto retry
+exit /b 1
