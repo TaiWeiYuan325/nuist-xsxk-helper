@@ -5,8 +5,8 @@ dist-v3/
 XsxkAvalonia/publish/
 build/
 *.zip
-XsxkWinUI/bin/
-XsxkWinUI/obj/
+**/bin/
+**/obj/
 XsxkAvalonia/bin/
 XsxkAvalonia/obj/
 NVIDIA Corporation/
