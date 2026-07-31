@@ -124,13 +124,44 @@ public static partial class Logic
         return best;
     }
 
+    /// <summary>宽松解析：容忍对象重复键（后者覆盖前者），非 JSON 时抛带片段的异常</summary>
     public static JsonObject ParseJsonText(string text)
     {
-        try { return JsonNode.Parse(text) as JsonObject ?? new JsonObject(); }
-        catch
+        try
+        {
+            using var doc = JsonDocument.Parse(text);
+            return FromElement(doc.RootElement) as JsonObject ?? new JsonObject();
+        }
+        catch (JsonException)
         {
             var snippet = string.IsNullOrEmpty(text) ? "(空响应)" : text[..Math.Min(200, text.Length)].Replace("\n", " ");
             throw new InvalidOperationException($"响应非JSON: {snippet}");
+        }
+    }
+
+    /// <summary>JsonElement → JsonNode。服务器响应偶发重复字段（如 KCXZ），
+    /// JsonNode.Parse 会直接抛异常，这里手动重建并去重（后者覆盖前者）。</summary>
+    public static JsonNode? FromElement(JsonElement el)
+    {
+        switch (el.ValueKind)
+        {
+            case JsonValueKind.Object:
+                var o = new JsonObject();
+                foreach (var p in el.EnumerateObject())
+                {
+                    o.Remove(p.Name);
+                    o[p.Name] = FromElement(p.Value);
+                }
+                return o;
+            case JsonValueKind.Array:
+                var a = new JsonArray();
+                foreach (var item in el.EnumerateArray()) a.Add(FromElement(item));
+                return a;
+            case JsonValueKind.Null:
+            case JsonValueKind.Undefined:
+                return null;
+            default:
+                return JsonNode.Parse(el.GetRawText());
         }
     }
 

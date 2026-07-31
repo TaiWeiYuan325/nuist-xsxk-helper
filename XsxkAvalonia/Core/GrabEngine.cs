@@ -217,6 +217,11 @@ public class GrabEngine
                     ETime = Logic.FmtTime(Logic.Pick(o, "endTime", "eTime", "end")),
                 });
             }
+            if (list.Count == 0 && arr.Count > 0)
+            {
+                var sample = arr[0]?.ToJsonString() ?? "null";
+                Log($"⚠️ 轮次响应 {arr.Count} 项但无一识别（首项样本，发给作者）: {sample[..Math.Min(300, sample.Length)]}");
+            }
             Batches = list;
             Log($"发现 {Batches.Count} 个选课轮次");
             var curWid = stu["currentElectiveBatch"] is JsonObject cb
