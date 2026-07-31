@@ -16,6 +16,7 @@
         <StreamGeometry x:Key="IcStop">M6.5,6.5 h11 v11 h-11 Z</StreamGeometry>
         <StreamGeometry x:Key="IcWarn">M12,3.5 L21.5,20 H2.5 Z M12,9.5 v4.5 M12,16.8 v0.3</StreamGeometry>
         <StreamGeometry x:Key="IcX">M5.5,5.5 L18.5,18.5 M18.5,5.5 L5.5,18.5</StreamGeometry>
+        <StreamGeometry x:Key="IcCopy">M8.5,8.5 h11 v11 h-11 Z M15.5,8.5 v-4 h-11 v11 h4</StreamGeometry>
         <StreamGeometry x:Key="IcTrash">M4,6.5 h16 M9.5,6.5 v-3 h5 v3 M6.5,6.5 l1,14 h9 l1,-14 M10,10.5 v6.5 M14,10.5 v6.5</StreamGeometry>
         <StreamGeometry x:Key="IcArrowUp">M12,19.5 v-15 M5.5,11 L12,4.5 L18.5,11</StreamGeometry>
         <StreamGeometry x:Key="IcArrowDown">M12,4.5 v15 M5.5,13 L12,19.5 L18.5,13</StreamGeometry>
