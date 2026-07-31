@@ -112,9 +112,10 @@ public sealed class BrowserPump : IDisposable
             {
                 try
                 {
-                    var json = await resp.JsonAsync();
+                    var je = await resp.JsonAsync();
+                    if (je is null) return;
                     var rows = new Dictionary<string, JsonObject>();
-                    Logic.WalkRows(JsonNode.Parse(json?.ToString() ?? "null"), rows);
+                    Logic.WalkRows(Logic.FromElement(je.Value), rows);
                     string ctype = "";
                     try
                     {
