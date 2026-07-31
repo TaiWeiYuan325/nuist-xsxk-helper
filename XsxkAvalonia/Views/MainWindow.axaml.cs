@@ -2,6 +2,7 @@ using System;
 using System.Collections.Specialized;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Markup.Xaml;
 using XsxkAvalonia.ViewModels;
 
@@ -35,6 +36,15 @@ public partial class MainWindow : Window
         if (btnMin is not null) btnMin.Click += (_, _) => WindowState = WindowState.Minimized;
         if (btnMax is not null) btnMax.Click += (_, _) => ToggleMax();
         if (btnClose is not null) btnClose.Click += (_, _) => Close();
+
+        // 复制全部日志到剪贴板
+        var btnCopyLog = this.FindControl<Button>("BtnCopyLog");
+        if (btnCopyLog is not null) btnCopyLog.Click += async (_, _) =>
+        {
+            if (_vm is null || Clipboard is null) return;
+            await Clipboard.SetTextAsync(_vm.GetAllLogText());
+            _vm.AddLocalLog($"[{DateTime.Now:HH:mm:ss.fff}] 📋 日志已复制到剪贴板，直接粘贴发送即可");
+        };
     }
 
     private void ToggleMax()

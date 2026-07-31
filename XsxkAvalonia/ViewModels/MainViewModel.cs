@@ -100,6 +100,9 @@ public partial class MainViewModel : ObservableObject
         while (Logs.Count > 2000) Logs.RemoveAt(0);
     }
 
+    public string GetAllLogText() => string.Join("\n", Logs.Select(l => l.Text));
+    public void AddLocalLog(string m) => AddLog(m);
+
     private void SyncFromEngine()
     {
         var e = Engine;
