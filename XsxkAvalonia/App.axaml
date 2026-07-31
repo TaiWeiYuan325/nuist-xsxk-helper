@@ -166,5 +166,28 @@
         <Style Selector="ListBoxItem:pointerover">
             <Setter Property="Background" Value="#80FEFE2C"/>
         </Style>
+
+        <!-- 下拉菜单项：与整体工业风统一（直角，悬停亮黄，选中黑底黄字） -->
+        <Style Selector="ComboBoxItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#212121"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="ComboBoxItem:pointerover">
+            <Setter Property="Background" Value="#FEFE2C"/>
+            <Setter Property="Foreground" Value="#212121"/>
+        </Style>
+        <Style Selector="ComboBoxItem:selected">
+            <Setter Property="Background" Value="#212121"/>
+            <Setter Property="Foreground" Value="#FEFE2C"/>
+        </Style>
+        <!-- 下拉弹出层边框（模板内 Border 命名不同时静默忽略） -->
+        <Style Selector="ComboBox /template/ Popup > Border">
+            <Setter Property="BorderBrush" Value="#212121"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="CornerRadius" Value="0"/>
+        </Style>
     </Application.Styles>
 </Application>
