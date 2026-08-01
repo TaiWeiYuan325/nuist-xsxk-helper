@@ -96,7 +96,6 @@ public class GrabEngine
         };
         Cache.Load();
         Batches = Cache.LoadBatches();
-        Auth = Cache.LoadAuth();
         StartNetLoop();
     }
 
@@ -105,18 +104,6 @@ public class GrabEngine
     {
         if (Batches.Count > 0)
             Log($"📦 已从本地缓存恢复 {Batches.Count} 个轮次（切轮次先显缓存，后台自动同步）");
-        if (string.IsNullOrEmpty(Auth)) return;
-        var sid = Logic.StudentIdFromJwt(Auth);
-        var exp = JwtExp(Auth);
-        if (exp == 0)
-        {
-            Log($"🔑 已从缓存恢复登录凭据（学号 {sid}，有效期未知，开抢前可用「检查 token」验证）");
-            return;
-        }
-        var remain = exp - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        Log(remain > 0
-            ? $"🔑 已从缓存恢复登录凭据（学号 {sid}，约 {remain / 3600} 小时 {remain % 3600 / 60} 分后到期）"
-            : $"⚠️ 缓存的登录凭据已过期（学号 {sid}），请重新登录");
     }
 
     public void Log(string m) => Logged?.Invoke($"[{DateTime.Now:HH:mm:ss.fff}] {m}");
@@ -181,7 +168,6 @@ public class GrabEngine
                 return false;
             }
             Auth = token;
-            Cache.SaveAuth(token);
             var name = data["student"]?["XM"]?.ToString();
             Log(string.IsNullOrEmpty(name)
                 ? $"🎉 登录成功（学号 {Logic.StudentIdFromJwt(token)}）"

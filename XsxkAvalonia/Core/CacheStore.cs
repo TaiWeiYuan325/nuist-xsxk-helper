@@ -24,6 +24,8 @@ public class CacheStore
         {
             if (File.Exists(_path))
                 _root = Logic.ParseJsonText(File.ReadAllText(_path));
+            // 登录态不再记忆：旧缓存文件里残留的 auth 字段（token）直接清除并落盘
+            if (_root.Remove("auth")) Flush();
         }
         catch { _root = new JsonObject(); }
     }
@@ -65,14 +67,6 @@ public class CacheStore
                 ["noSelectReason"] = b.NoSelectReason,
             });
         lock (this) { _root["batches"] = arr; }
-        Flush();
-    }
-
-    public string LoadAuth() => _root["auth"]?.ToString() ?? "";
-
-    public void SaveAuth(string auth)
-    {
-        lock (this) { _root["auth"] = string.IsNullOrEmpty(auth) ? null : auth; }
         Flush();
     }
 

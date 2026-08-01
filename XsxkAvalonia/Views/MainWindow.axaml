@@ -4,7 +4,7 @@
         xmlns:material="clr-namespace:Material.Styles.Controls;assembly=Material.Styles"
         x:Class="XsxkAvalonia.Views.MainWindow"
         x:DataType="vm:MainViewModel"
-        Title="南信大选课助手 v3.1"
+        Title="南信大选课助手 v3.1.1"
         Width="1360" Height="920" MinWidth="1160" MinHeight="720"
         WindowStartupLocation="CenterScreen"
         Background="#F4F4F2"
@@ -21,7 +21,7 @@
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10"
                             Margin="14,0,0,0" VerticalAlignment="Center">
                     <TextBlock Text="南信大选课助手" FontSize="14" FontWeight="Black"/>
-                    <TextBlock Text="// NUIST XSXK HELPER v3.1" FontSize="10" Opacity="0.45"
+                    <TextBlock Text="// NUIST XSXK HELPER v3.1.1" FontSize="10" Opacity="0.45"
                                FontFamily="Consolas" FontWeight="Bold"
                                VerticalAlignment="Bottom" Margin="2,0,0,1"/>
                 </StackPanel>
@@ -159,7 +159,7 @@
                                         Classes="ef-primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
                                     <TextBlock Text="登录选课系统" FontWeight="Black"/>
                                 </Button>
-                                <TextBlock Text="密码只存内存不落盘；token 会缓存，重启免登录。验证码由内置 OCR 自动识别，识别有误可手动改正。全部请求走软件内置会话，无需浏览器。"
+                                <TextBlock Text="密码和 token 只存内存不落盘，重启软件需重新登录。验证码由内置 OCR 自动识别，识别有误可手动改正。全部请求走软件内置会话，无需浏览器。"
                                            FontSize="11" Opacity="0.6" TextWrapping="Wrap"/>
                             </StackPanel>
                             <!-- 登录成功后折叠为单行，不占课程列表高度 -->

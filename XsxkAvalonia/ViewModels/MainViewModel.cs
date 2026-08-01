@@ -93,12 +93,10 @@ public partial class MainViewModel : ObservableObject
     {
         Engine.Logged += m => Post(() => AddLog(m));
         Engine.StateChanged += () => Post(SyncFromEngine);
-        AddLog($"[{DateTime.Now:HH:mm:ss.fff}] 南信大选课助手 v3.1 已启动。");
+        AddLog($"[{DateTime.Now:HH:mm:ss.fff}] 南信大选课助手 v3.1.1 已启动。");
         Engine.LogCacheRestore();
         SyncFromEngine();
-        // 有缓存 token 先校验有效期，没有/过期则直接拉验证码准备登录
-        var cached = !string.IsNullOrEmpty(Engine.Auth);
-        if (cached) Engine.CheckToken();
+        // 登录态不记忆，每次启动都需要重新登录——直接拉验证码
         _ = RefreshCaptchaAsync();
     }
 
